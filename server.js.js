@@ -1,13 +1,26 @@
 /**
- * BACKEND TRACKER COMPLETO - INTEGRAÇÃO KIWIFY, CACKTO, GREEN & META CAPI
- * Pronto para rodar no Render, Railway ou VPS
+ * BACKEND SF TRACKER IA - INTEGRAÇÃO KIWIFY, CACKTO, GREEN & META CAPI
+ * Compatível nativamente com Node 20 / 22 / 24 (Zero compilação C++)
  */
 
 const express = require('express');
 const cors = require('cors');
 const crypto = require('crypto');
 const axios = require('axios');
-const Database = require('better-sqlite3');
+const fs = require('fs');
+const path = require('path');
+
+// Suporte nativo ao SQLite (Node 22+) ou fallback para banco JSON leve
+let dbSync = null;
+try {
+  const { DatabaseSync, Database } = require('node:sqlite');
+  const DBClass = DatabaseSync || Database;
+  if (DBClass) {
+    dbSync = new DBClass(path.resolve(process.cwd(), 'tracker.db'));
+  }
+} catch (e) {
+  console.log('[INFO] Utilizando engine leve de persistência.');
+}
 
 const app = express();
 app.use(cors());
@@ -17,63 +30,86 @@ app.use(express.json());
 const META_PIXEL_ID = process.env.META_PIXEL_ID || "SEU_PIXEL_ID";
 const META_ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || "SEU_ACCESS_TOKEN";
 
-// Banco SQLite ultra leve e rápido (sem custo de banco na nuvem)
-const db = new Database('tracker.db');
-db.exec(`
-  CREATE TABLE IF NOT EXISTS sales (
-    id TEXT PRIMARY KEY,
-    platform TEXT,
-    customer_name TEXT,
-    customer_email TEXT,
-    amount REAL,
-    net_amount REAL,
-    status TEXT,
-    utm_source TEXT,
-    utm_campaign TEXT,
-    campaign_id TEXT,
-    utm_medium TEXT,
-    adset_id TEXT,
-    utm_content TEXT,
-    ad_id TEXT,
-    utm_term TEXT,
-    sck TEXT,
-    country TEXT,
-    city TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
+// Inicialização da Tabela SQLite (se disponível) ou Estrutura em Memória/Arquivo
+const JSON_DB_FILE = path.resolve(process.cwd(), 'sales_data.json');
+let memoryData = {
+  sales: [],
+  taxes: {
+    meta_tax_pct: 12.50,
+    empresa_tax_pct: 0.00,
+    plat_tax_pct: 8.99,
+    plat_tax_fix: 2.49
+  }
+};
 
-  CREATE TABLE IF NOT EXISTS tax_settings (
-    id INTEGER PRIMARY KEY CHECK (id = 1),
-    meta_tax_pct REAL DEFAULT 12.50,
-    empresa_tax_pct REAL DEFAULT 0.00,
-    plat_tax_pct REAL DEFAULT 8.99,
-    plat_tax_fix REAL DEFAULT 2.49,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
+if (fs.existsSync(JSON_DB_FILE)) {
+  try {
+    memoryData = JSON.parse(fs.readFileSync(JSON_DB_FILE, 'utf8'));
+  } catch (err) {}
+}
 
-  INSERT OR IGNORE INTO tax_settings (id, meta_tax_pct, empresa_tax_pct, plat_tax_pct, plat_tax_fix)
-  VALUES (1, 12.50, 0.00, 8.99, 2.49);
+function persistMemory() {
+  try {
+    fs.writeFileSync(JSON_DB_FILE, JSON.stringify(memoryData, null, 2));
+  } catch (err) {}
+}
 
-  CREATE TABLE IF NOT EXISTS rules (
-    id TEXT PRIMARY KEY,
-    name TEXT,
-    action_type TEXT,
-    target TEXT,
-    condition_text TEXT,
-    active INTEGER DEFAULT 1,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-`);
+if (dbSync) {
+  try {
+    dbSync.exec(`
+      CREATE TABLE IF NOT EXISTS sales (
+        id TEXT PRIMARY KEY,
+        platform TEXT,
+        customer_name TEXT,
+        customer_email TEXT,
+        amount REAL,
+        net_amount REAL,
+        status TEXT,
+        utm_source TEXT,
+        utm_campaign TEXT,
+        campaign_id TEXT,
+        utm_medium TEXT,
+        adset_id TEXT,
+        utm_content TEXT,
+        ad_id TEXT,
+        utm_term TEXT,
+        sck TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS tax_settings (
+        id INTEGER PRIMARY KEY,
+        meta_tax_pct REAL DEFAULT 12.50,
+        empresa_tax_pct REAL DEFAULT 0.00,
+        plat_tax_pct REAL DEFAULT 8.99,
+        plat_tax_fix REAL DEFAULT 2.49
+      );
+
+      INSERT OR IGNORE INTO tax_settings (id, meta_tax_pct, empresa_tax_pct, plat_tax_pct, plat_tax_fix)
+      VALUES (1, 12.50, 0.00, 8.99, 2.49);
+    `);
+  } catch (e) {
+    console.warn('[DB WARNING]', e.message);
+  }
+}
+
+function getTaxes() {
+  if (dbSync) {
+    try {
+      const row = dbSync.prepare('SELECT * FROM tax_settings WHERE id = 1').get();
+      if (row) return row;
+    } catch (e) {}
+  }
+  return memoryData.taxes;
+}
 
 function calculateNetAmount(grossAmount) {
-  const settings = db.prepare('SELECT * FROM tax_settings WHERE id = 1').get();
+  const settings = getTaxes();
   const platTax = (grossAmount * (settings.plat_tax_pct / 100)) + settings.plat_tax_fix;
   const net = grossAmount - platTax;
   return Math.max(0, net);
 }
 
-// Utilitário para quebrar a string de SCK no formato:
-// source|campaignName|campaignId|adsetName|adsetId|adName|adId|placement
 function parseTrackingSCK(sckString, bodyParams = {}) {
   let result = {
     utm_source: bodyParams.utm_source || 'direct',
@@ -87,10 +123,8 @@ function parseTrackingSCK(sckString, bodyParams = {}) {
   };
 
   if (!sckString) return result;
-
   const parts = sckString.split('|');
-  
-  // Se vier com separadores de pipeline gerados pelo Facebook Ads
+
   if (parts.length >= 2) {
     result.utm_source = parts[0] || result.utm_source;
     result.utm_campaign = parts[1] || result.utm_campaign;
@@ -102,55 +136,55 @@ function parseTrackingSCK(sckString, bodyParams = {}) {
     result.utm_term = parts[7] || result.utm_term;
   }
 
-  // Normalização caso a campanha venha no formato "Nome|ID"
-  if (result.utm_campaign && result.utm_campaign.includes('|')) {
-    const cParts = result.utm_campaign.split('|');
-    result.utm_campaign = cParts[0];
-    result.campaign_id = cParts[1] || result.campaign_id;
-  }
-
-  if (result.utm_content && result.utm_content.includes('|')) {
-    const aParts = result.utm_content.split('|');
-    result.utm_content = aParts[0];
-    result.ad_id = aParts[1] || result.ad_id;
-  }
-
   return result;
 }
 
-// Endpoint para ler e salvar configurações de taxas
-app.get('/api/v1/taxes', (req, res) => {
-  const settings = db.prepare('SELECT * FROM tax_settings WHERE id = 1').get();
-  res.json(settings);
-});
+function saveSale(saleData) {
+  if (dbSync) {
+    try {
+      const stmt = dbSync.prepare(`
+        INSERT OR REPLACE INTO sales (
+          id, platform, customer_name, customer_email, amount, net_amount, status,
+          utm_source, utm_campaign, campaign_id, utm_medium, adset_id, utm_content, ad_id, utm_term, sck
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      stmt.run(
+        saleData.id, saleData.platform, saleData.customer_name, saleData.customer_email,
+        saleData.amount, saleData.net_amount, saleData.status,
+        saleData.utm_source, saleData.utm_campaign, saleData.campaign_id,
+        saleData.utm_medium, saleData.adset_id,
+        saleData.utm_content, saleData.ad_id,
+        saleData.utm_term, saleData.sck
+      );
+      return;
+    } catch (e) {}
+  }
 
-app.post('/api/v1/taxes', (req, res) => {
-  const { meta_tax_pct, empresa_tax_pct, plat_tax_pct, plat_tax_fix } = req.body;
-  db.prepare(`
-    UPDATE tax_settings 
-    SET meta_tax_pct = ?, empresa_tax_pct = ?, plat_tax_pct = ?, plat_tax_fix = ?, updated_at = CURRENT_TIMESTAMP
-    WHERE id = 1
-  `).run(meta_tax_pct, empresa_tax_pct, plat_tax_pct, plat_tax_fix);
-
-  res.json({ success: true });
-});
+  // Fallback seguro em JSON
+  const existingIdx = memoryData.sales.findIndex(s => s.id === saleData.id);
+  if (existingIdx >= 0) {
+    memoryData.sales[existingIdx] = saleData;
+  } else {
+    memoryData.sales.unshift(saleData);
+  }
+  persistMemory();
+}
 
 function sha256(val) {
   if (!val) return null;
   return crypto.createHash('sha256').update(val.trim().toLowerCase()).digest('hex');
 }
 
-// Disparador Meta CAPI
 async function sendMetaPurchase(sale, req) {
   if (!META_PIXEL_ID || META_PIXEL_ID === "SEU_PIXEL_ID") return;
   const url = `https://graph.facebook.com/v19.0/${META_PIXEL_ID}/events?access_token=${META_ACCESS_TOKEN}`;
-  
+
   try {
     await axios.post(url, {
       data: [{
         event_name: 'Purchase',
         event_time: Math.floor(Date.now() / 1000),
-        event_id: sale.id, // Deduplicação
+        event_id: sale.id,
         action_source: 'website',
         user_data: {
           em: [sha256(sale.customer_email)],
@@ -168,12 +202,30 @@ async function sendMetaPurchase(sale, req) {
   }
 }
 
-// =================================================================
-// 1. WEBHOOK KIWIFY (https://seu-dominio.com/api/v1/webhook/kiwify)
-// =================================================================
+// ENDPOINTS DE CONFIGURAÇÃO DE TAXAS
+app.get('/api/v1/taxes', (req, res) => {
+  res.json(getTaxes());
+});
+
+app.post('/api/v1/taxes', (req, res) => {
+  const { meta_tax_pct, empresa_tax_pct, plat_tax_pct, plat_tax_fix } = req.body;
+  if (dbSync) {
+    try {
+      dbSync.prepare(`
+        UPDATE tax_settings 
+        SET meta_tax_pct = ?, empresa_tax_pct = ?, plat_tax_pct = ?, plat_tax_fix = ?
+        WHERE id = 1
+      `).run(meta_tax_pct, empresa_tax_pct, plat_tax_pct, plat_tax_fix);
+    } catch (e) {}
+  }
+  memoryData.taxes = { meta_tax_pct, empresa_tax_pct, plat_tax_pct, plat_tax_fix };
+  persistMemory();
+  res.json({ success: true });
+});
+
+// WEBHOOK KIWIFY
 app.post('/api/v1/webhook/kiwify', async (req, res) => {
   const body = req.body;
-
   const saleId = body.order_id || body.order_ref || 'kw_' + Date.now();
   const name = body.Customer?.full_name || body.Customer?.name || 'Cliente';
   const email = body.Customer?.email || '';
@@ -184,57 +236,37 @@ app.post('/api/v1/webhook/kiwify', async (req, res) => {
   const sckRaw = body.TrackingParameters?.sck || body.TrackingParameters?.src || '';
   const tracking = parseTrackingSCK(sckRaw, body.TrackingParameters || {});
 
-  const stmt = db.prepare(`
-    INSERT OR REPLACE INTO sales (
-      id, platform, customer_name, customer_email, amount, net_amount, status, 
-      utm_source, utm_campaign, campaign_id, utm_medium, adset_id, utm_content, ad_id, utm_term, sck
-    ) VALUES (?, 'kiwify', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-  stmt.run(
-    saleId, name, email, amount, netAmount, status, 
-    tracking.utm_source, tracking.utm_campaign, tracking.campaign_id,
-    tracking.utm_medium, tracking.adset_id,
-    tracking.utm_content, tracking.ad_id,
-    tracking.utm_term, sckRaw
-  );
+  saveSale({
+    id: saleId, platform: 'kiwify', customer_name: name, customer_email: email,
+    amount, net_amount: netAmount, status, ...tracking, sck: sckRaw,
+    created_at: new Date().toISOString()
+  });
 
   if (status === 'approved') {
     await sendMetaPurchase({ id: saleId, customer_email: email, amount }, req);
   }
 
-  console.log(`[Kiwify] Venda ID: ${saleId} - Campanha: ${tracking.utm_campaign} - Criativo: ${tracking.utm_content}`);
   return res.status(200).json({ received: true });
 });
 
-// =================================================================
-// 2. WEBHOOK CACKTO (https://seu-dominio.com/api/v1/webhook/cackto)
-// =================================================================
+// WEBHOOK CACKTO
 app.post('/api/v1/webhook/cackto', async (req, res) => {
   const body = req.body;
-
   const saleId = body.transaction_id || body.order_id || 'ck_' + Date.now();
   const name = body.customer?.name || body.name || 'Cliente';
   const email = body.customer?.email || body.email || '';
   const amount = Number(body.amount || body.price || 0);
   const netAmount = calculateNetAmount(amount);
   const status = (body.status === 'paid' || body.event === 'sale.approved') ? 'approved' : 'pending';
-  
+
   const sckRaw = body.sck || body.src || body.tracking_parameters?.sck || '';
   const tracking = parseTrackingSCK(sckRaw, body.tracking_parameters || {});
 
-  const stmt = db.prepare(`
-    INSERT OR REPLACE INTO sales (
-      id, platform, customer_name, customer_email, amount, net_amount, status, 
-      utm_source, utm_campaign, campaign_id, utm_medium, adset_id, utm_content, ad_id, utm_term, sck
-    ) VALUES (?, 'cackto', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-  stmt.run(
-    saleId, name, email, amount, netAmount, status,
-    tracking.utm_source, tracking.utm_campaign, tracking.campaign_id,
-    tracking.utm_medium, tracking.adset_id,
-    tracking.utm_content, tracking.ad_id,
-    tracking.utm_term, sckRaw
-  );
+  saveSale({
+    id: saleId, platform: 'cackto', customer_name: name, customer_email: email,
+    amount, net_amount: netAmount, status, ...tracking, sck: sckRaw,
+    created_at: new Date().toISOString()
+  });
 
   if (status === 'approved') {
     await sendMetaPurchase({ id: saleId, customer_email: email, amount }, req);
@@ -243,12 +275,9 @@ app.post('/api/v1/webhook/cackto', async (req, res) => {
   return res.status(200).json({ received: true });
 });
 
-// =================================================================
-// 3. WEBHOOK GREEN (https://seu-dominio.com/api/v1/webhook/green)
-// =================================================================
+// WEBHOOK GREEN
 app.post('/api/v1/webhook/green', async (req, res) => {
   const body = req.body;
-
   const saleId = body.sale?.id || body.transaction || 'gr_' + Date.now();
   const name = body.client?.name || body.buyer?.name || 'Cliente';
   const email = body.client?.email || body.buyer?.email || '';
@@ -259,19 +288,11 @@ app.post('/api/v1/webhook/green', async (req, res) => {
   const sckRaw = body.sale?.sck || body.sck || '';
   const tracking = parseTrackingSCK(sckRaw, body.sale || {});
 
-  const stmt = db.prepare(`
-    INSERT OR REPLACE INTO sales (
-      id, platform, customer_name, customer_email, amount, net_amount, status, 
-      utm_source, utm_campaign, campaign_id, utm_medium, adset_id, utm_content, ad_id, utm_term, sck
-    ) VALUES (?, 'green', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-  stmt.run(
-    saleId, name, email, amount, netAmount, status,
-    tracking.utm_source, tracking.utm_campaign, tracking.campaign_id,
-    tracking.utm_medium, tracking.adset_id,
-    tracking.utm_content, tracking.ad_id,
-    tracking.utm_term, sckRaw
-  );
+  saveSale({
+    id: saleId, platform: 'green', customer_name: name, customer_email: email,
+    amount, net_amount: netAmount, status, ...tracking, sck: sckRaw,
+    created_at: new Date().toISOString()
+  });
 
   if (status === 'approved') {
     await sendMetaPurchase({ id: saleId, customer_email: email, amount }, req);
@@ -280,11 +301,18 @@ app.post('/api/v1/webhook/green', async (req, res) => {
   return res.status(200).json({ received: true });
 });
 
-// Endpoint para abastecer o dashboard
+// LISTA DE VENDAS PARA O DASHBOARD
 app.get('/api/v1/sales', (req, res) => {
-  const rows = db.prepare('SELECT * FROM sales ORDER BY created_at DESC LIMIT 100').all();
-  res.json({ sales: rows });
+  if (dbSync) {
+    try {
+      const rows = dbSync.prepare('SELECT * FROM sales ORDER BY created_at DESC LIMIT 100').all();
+      return res.json({ sales: rows });
+    } catch (e) {}
+  }
+  res.json({ sales: memoryData.sales.slice(0, 100) });
 });
 
+app.get('/health', (req, res) => res.json({ status: 'ok', service: 'SF TRACKER IA API' }));
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`SF Tracker IA rodando na porta ${PORT}`));
+app.listen(PORT, () => console.log(`SF Tracker IA API operacional na porta ${PORT}`));

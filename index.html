@@ -1,0 +1,1979 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>SF TRACKER IA - Sistema Completo de Atribuição & Otimização</title>
+  
+  <!-- PWA Meta tags -->
+  <meta name="theme-color" content="#080b11" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="SF Tracker" />
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              neon: '#00ff88'
+            },
+            dark: {
+              950: '#05080e',
+              900: '#090e17',
+              850: '#0f1726',
+              800: '#152033',
+              750: '#1c2b44',
+              700: '#253757',
+              600: '#334155'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090e17;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1c2b44;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #253757;
+    }
+
+    /* Modo Privado (Blur) */
+    body.private-mode .private-blur {
+      filter: blur(7px);
+      user-select: none;
+      transition: filter 0.2s ease;
+    }
+
+    /* Glows & Animações */
+    .glow-neon {
+      box-shadow: 0 0 15px -3px rgba(16, 185, 129, 0.4);
+    }
+    .glow-dot {
+      box-shadow: 0 0 10px #10b981;
+    }
+
+    /* Switch iOS Style */
+    .switch-toggle:checked ~ .switch-dot {
+      transform: translateX(100%);
+      background-color: #10b981;
+    }
+    .switch-toggle:checked ~ .switch-bg {
+      background-color: rgba(16, 185, 129, 0.35);
+      border-color: #10b981;
+    }
+
+    /* Funnel Shape Polygon */
+    .funnel-stage {
+      clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%);
+    }
+    .funnel-stage-first {
+      clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%);
+    }
+  </style>
+</head>
+<body class="bg-dark-950 text-slate-100 min-h-screen font-sans flex antialiased selection:bg-brand-500 selection:text-black">
+
+  <!-- Toast Notification Box -->
+  <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ============================================================ -->
+  <!-- SIDEBAR LATERAL (MENU COMPLETO LOWTRACK / UTMIFY)           -->
+  <!-- ============================================================ -->
+  <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-dark-900 border-r border-dark-750/70 flex flex-col justify-between transition-transform duration-300 md:translate-x-0 -translate-x-full">
+    <div class="overflow-y-auto flex-1">
+      <!-- Brand Logo -->
+      <div class="h-16 px-5 flex items-center justify-between border-b border-dark-750/70">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400/20 to-teal-500/10 border border-emerald-500/40 flex items-center justify-center text-brand-neon shadow-lg shadow-emerald-500/20">
+            <i data-lucide="cpu" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="font-black text-sm tracking-tight text-white uppercase font-mono">SF TRACKER</span>
+            <span class="text-[9px] font-extrabold uppercase bg-gradient-to-r from-emerald-500 to-teal-400 text-black px-1.5 py-0.5 rounded shadow font-sans">IA</span>
+          </div>
+        </div>
+        <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-white p-1">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Navigation Section -->
+      <nav class="p-3 space-y-1 text-xs">
+        
+        <!-- Grupo Dashboards (Accordion) -->
+        <div>
+          <button onclick="toggleSidebarSubmenu('submenu-dashboards')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-dark-850 font-medium transition">
+            <div class="flex items-center gap-2.5">
+              <i data-lucide="layout-dashboard" class="w-4 h-4 text-slate-400"></i>
+              <span>Dashboards</span>
+            </div>
+            <i data-lucide="chevron-down" id="arrow-dashboards" class="w-3.5 h-3.5 text-slate-400 transition-transform"></i>
+          </button>
+          
+          <div id="submenu-dashboards" class="ml-4 pl-3 border-l border-dark-750 mt-1 space-y-1">
+            <button onclick="switchTab('painel')" id="nav-btn-painel" class="nav-item w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-emerald-400 font-semibold bg-dark-800/80 transition">
+              <span class="flex items-center gap-2">
+                <i data-lucide="line-chart" class="w-3.5 h-3.5"></i>
+                Dashboard Principal
+              </span>
+            </button>
+            <button onclick="switchTab('resumo')" id="nav-btn-resumo" class="nav-item w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition">
+              <span class="flex items-center gap-2">
+                <i data-lucide="home" class="w-3.5 h-3.5"></i>
+                Painel Resumo
+              </span>
+            </button>
+            <button onclick="switchTab('aovivo')" id="nav-btn-aovivo" class="nav-item w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition">
+              <span class="flex items-center gap-2">
+                <i data-lucide="globe" class="w-3.5 h-3.5"></i>
+                Ao vivo (Globo 3D)
+              </span>
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-dark-750/50 my-2"></div>
+
+        <!-- Links Principais -->
+        <button onclick="switchTab('campanhas')" id="nav-btn-campanhas" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-dark-850 font-medium transition">
+          <div class="flex items-center gap-3">
+            <i data-lucide="megaphone" class="w-4 h-4 text-brand-neon"></i>
+            <span>Campanhas</span>
+          </div>
+          <span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-mono font-bold">4 NÍVEIS</span>
+        </button>
+
+        <button onclick="switchTab('vendas')" id="nav-btn-vendas" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-dark-850 font-medium transition">
+          <div class="flex items-center gap-3">
+            <i data-lucide="badge-dollar-sign" class="w-4 h-4 text-emerald-400"></i>
+            <span>Vendas</span>
+          </div>
+          <span class="text-[10px] bg-dark-750 px-2 py-0.5 rounded-full text-slate-300 font-mono" id="sidebar-sales-count">191</span>
+        </button>
+
+        <button onclick="switchTab('visitas')" id="nav-btn-visitas" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-dark-850 font-medium transition">
+          <div class="flex items-center gap-3">
+            <i data-lucide="eye" class="w-4 h-4 text-blue-400"></i>
+            <span>Visitas</span>
+          </div>
+          <span class="text-[10px] text-slate-400 font-mono">1.842</span>
+        </button>
+
+        <!-- REGRAS AUTOMÁTICAS (PRO) -->
+        <button onclick="switchTab('regras')" id="nav-btn-regras" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-dark-850 font-medium transition group">
+          <div class="flex items-center gap-3">
+            <i data-lucide="zap" class="w-4 h-4 text-amber-400 group-hover:animate-bounce"></i>
+            <span class="font-bold text-white">Regras</span>
+          </div>
+          <span class="text-[9px] bg-gradient-to-r from-amber-500 to-amber-600 text-black font-extrabold px-1.5 py-0.5 rounded shadow">PRO</span>
+        </button>
+
+        <!-- INTEGRAÇÕES -->
+        <button onclick="switchTab('integracoes')" id="nav-btn-integracoes" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-dark-850 font-medium transition">
+          <div class="flex items-center gap-3">
+            <i data-lucide="link" class="w-4 h-4 text-purple-400"></i>
+            <span>Integrações</span>
+          </div>
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        </button>
+
+        <!-- TAXAS E IMPOSTOS (NOVA FUNCIONALIDADE) -->
+        <button onclick="openTaxModal()" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-amber-400 hover:text-white hover:bg-dark-850 font-medium transition">
+          <div class="flex items-center gap-3">
+            <i data-lucide="percent" class="w-4 h-4 text-amber-400"></i>
+            <span>Configurar Taxas & Impostos</span>
+          </div>
+          <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+        </button>
+
+        <!-- NOTIFICAÇÕES -->
+        <button onclick="switchTab('notificacoes')" id="nav-btn-notificacoes" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-dark-850 font-medium transition">
+          <div class="flex items-center gap-3">
+            <i data-lucide="bell" class="w-4 h-4 text-sky-400"></i>
+            <span>Notificações</span>
+          </div>
+          <span class="w-2 h-2 rounded-full bg-sky-500 animate-ping"></span>
+        </button>
+
+        <!-- SIMULADOR CACKTO & GREEN -->
+        <button onclick="switchTab('simulador')" id="nav-btn-simulador" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-dark-850 font-medium transition">
+          <div class="flex items-center gap-3">
+            <i data-lucide="terminal" class="w-4 h-4 text-amber-400"></i>
+            <span>Simulador de Vendas</span>
+          </div>
+        </button>
+
+        <!-- INSTALAÇÃO / PWA -->
+        <button onclick="switchTab('instalacao')" id="nav-btn-instalacao" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-dark-850 font-medium transition">
+          <div class="flex items-center gap-3">
+            <i data-lucide="smartphone" class="w-4 h-4 text-emerald-400"></i>
+            <span>Instalar no Celular</span>
+          </div>
+          <span class="text-[9px] bg-emerald-500 text-black font-extrabold px-1.5 py-0.5 rounded">App</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Trial & Plano Footer -->
+    <div class="p-3 border-t border-dark-750/70 space-y-3">
+      <div class="bg-dark-850 p-3 rounded-2xl border border-dark-750 text-xs space-y-2">
+        <div class="flex items-center justify-between text-slate-400 text-[11px]">
+          <span class="flex items-center gap-1.5 font-medium">
+            <i data-lucide="clock" class="w-3.5 h-3.5 text-blue-400"></i>
+            <span>Trial Ativo</span>
+          </span>
+          <span class="text-slate-300 font-mono font-bold">3 dias</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] text-slate-400">Faturado:</span>
+          <span class="text-emerald-400 font-bold font-mono private-blur" id="sidebar-faturado">R$ 10.800,85</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button onclick="showToast('Seu plano é vitalício e ilimitado.', 'info')" class="w-full py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] transition">Planos</button>
+          <button onclick="showToast('Suporte SF Tracker IA 24/7 disponível', 'info')" class="w-full py-1.5 rounded-xl bg-dark-750 hover:bg-dark-700 text-slate-200 text-[11px] transition">Suporte</button>
+        </div>
+      </div>
+
+      <!-- User Profile Card -->
+      <div class="flex items-center justify-between pt-1 text-xs">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 p-[1.5px]">
+            <div class="w-full h-full rounded-full bg-dark-900 flex items-center justify-center font-bold text-white text-[11px]">
+              SF
+            </div>
+          </div>
+          <div>
+            <div class="font-bold text-white text-[11px] leading-tight">SF Player</div>
+            <div class="text-[10px] text-emerald-400">Plano Vitalício</div>
+          </div>
+        </div>
+        <button onclick="togglePrivateMode()" title="Modo Privado" class="text-slate-400 hover:text-white p-1">
+          <i data-lucide="eye" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Mobile Overlay -->
+  <div id="sidebar-overlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 hidden md:hidden"></div>
+
+  <!-- ============================================================ -->
+  <!-- CONTEÚDO PRINCIPAL (HEADER + DASHBOARD)                      -->
+  <!-- ============================================================ -->
+  <div class="flex-1 md:ml-64 flex flex-col min-w-0">
+
+    <!-- Top Navigation Bar -->
+    <header class="h-16 border-b border-dark-750/80 bg-dark-900/90 backdrop-blur sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-300 hover:text-white p-1">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+
+        <h1 class="text-sm font-bold text-white tracking-wide hidden sm:block">Dashboard Principal</h1>
+
+        <!-- Date Quick Filter Pills (Print 5) -->
+        <div class="hidden xl:flex items-center gap-1 bg-dark-850 p-1 rounded-xl border border-dark-750 text-xs">
+          <button onclick="setQuickPeriod('hoje')" class="period-pill px-2.5 py-1 rounded-lg bg-dark-750 text-white font-semibold">Hoje</button>
+          <button onclick="setQuickPeriod('ontem')" class="period-pill px-2.5 py-1 rounded-lg text-slate-400 hover:text-white">Ontem</button>
+          <button onclick="setQuickPeriod('7d')" class="period-pill px-2.5 py-1 rounded-lg text-slate-400 hover:text-white">7 dias</button>
+          <button onclick="setQuickPeriod('15d')" class="period-pill px-2.5 py-1 rounded-lg text-slate-400 hover:text-white">15 dias</button>
+          <button onclick="setQuickPeriod('30d')" class="period-pill px-2.5 py-1 rounded-lg text-slate-400 hover:text-white">30 dias</button>
+        </div>
+      </div>
+
+      <!-- Right Actions -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Tax Configuration Button -->
+        <button onclick="openTaxModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-dark-850 hover:bg-dark-800 border border-amber-500/30 text-amber-400 text-xs font-semibold transition" title="Configurar Taxas e Impostos">
+          <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
+          <span class="hidden md:inline">Taxas & Impostos</span>
+        </button>
+
+        <!-- Private Mode -->
+        <button onclick="togglePrivateMode()" id="btn-private-mode" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-dark-850 border border-dark-750 text-slate-300 hover:text-white text-xs font-semibold transition">
+          <i data-lucide="eye" id="private-icon" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">Modo privado</span>
+        </button>
+
+        <!-- Refresh -->
+        <button onclick="refreshDashboard()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-dark-850 hover:bg-dark-800 border border-dark-750 text-xs text-slate-200 transition">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-slate-400"></i>
+          <span class="hidden sm:inline">Atualizar</span>
+        </button>
+
+        <!-- Play Coin Sound Test -->
+        <button onclick="playCashRegisterSound()" class="w-8 h-8 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center transition" title="Testar Som da Venda (Moedinha)">
+          <i data-lucide="bell-ring" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- MAIN BODY CONTENT -->
+    <main class="flex-1 p-4 sm:p-6 space-y-6 max-w-7xl w-full mx-auto">
+
+      <!-- ======================================================== -->
+      <!-- ABA: DASHBOARD PRINCIPAL (COMPLETO CONFORME PRINT 5)     -->
+      <!-- ======================================================== -->
+      <div id="tab-painel" class="space-y-6">
+
+        <!-- Banner de Trial Discreto -->
+        <div class="bg-dark-900 border border-dark-750/70 px-4 py-2.5 rounded-2xl flex items-center justify-between text-xs text-slate-300">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span>Seu teste gratuito expira em <strong class="text-white">4 dias</strong>. Assine para continuar ilimitado &rarr;</span>
+          </div>
+          <button onclick="showToast('Sua conta já possui licença vitalícia ativada!', 'success')" class="text-emerald-400 font-bold hover:underline">Ver planos</button>
+        </div>
+
+        <!-- KPIs Linha 1 (Cards Grandes do Print 5) -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <!-- Faturamento Líquido -->
+          <div class="bg-dark-900 border border-dark-750/80 p-4 rounded-2xl relative overflow-hidden">
+            <span class="text-[11px] text-slate-400 block mb-1 uppercase tracking-wider font-semibold">Faturamento (Líquido)</span>
+            <div class="text-xl font-black text-white font-mono private-blur" id="dash-faturamento-liq">R$ 34,51</div>
+            <div class="text-[10px] text-slate-500 mt-1">Bruto: <span class="text-slate-300 private-blur" id="dash-faturamento-bruto">R$ 37,99</span></div>
+          </div>
+
+          <!-- Lucro Líquido Real -->
+          <div class="bg-dark-900 border border-dark-750/80 p-4 rounded-2xl">
+            <span class="text-[11px] text-slate-400 block mb-1 uppercase tracking-wider font-semibold">Lucro (Líquido)</span>
+            <div class="text-xl font-black text-blue-400 font-mono private-blur" id="dash-lucro-liq">R$ 6,93</div>
+            <div class="text-[10px] text-emerald-400 mt-1 flex items-center gap-1 font-bold">
+              <span>▲ Positivo</span>
+            </div>
+          </div>
+
+          <!-- Gasto em Ads -->
+          <div class="bg-dark-900 border border-dark-750/80 p-4 rounded-2xl">
+            <span class="text-[11px] text-slate-400 block mb-1 uppercase tracking-wider font-semibold">Gasto em Ads</span>
+            <div class="text-xl font-black text-white font-mono private-blur" id="dash-gasto-ads">R$ 24,52</div>
+            <div class="text-[10px] text-slate-500 mt-1">+ R$ 3,07 imposto</div>
+          </div>
+
+          <!-- CPA Médio -->
+          <div class="bg-dark-900 border border-dark-750/80 p-4 rounded-2xl">
+            <span class="text-[11px] text-slate-400 block mb-1 uppercase tracking-wider font-semibold">CPA</span>
+            <div class="text-xl font-black text-white font-mono private-blur" id="dash-cpa">R$ 24,52</div>
+            <div class="text-[10px] text-slate-400 mt-1">Custo por venda</div>
+          </div>
+
+          <!-- ARPU (Ticket) -->
+          <div class="bg-dark-900 border border-dark-750/80 p-4 rounded-2xl">
+            <span class="text-[11px] text-slate-400 block mb-1 uppercase tracking-wider font-semibold">ARPU</span>
+            <div class="text-xl font-black text-white font-mono private-blur" id="dash-arpu">R$ 34,51</div>
+            <div class="text-[10px] text-slate-400 mt-1">Ticket médio</div>
+          </div>
+
+          <!-- ROAS -->
+          <div class="bg-dark-900 border border-dark-750/80 p-4 rounded-2xl">
+            <span class="text-[11px] text-slate-400 block mb-1 uppercase tracking-wider font-semibold">ROAS</span>
+            <div class="text-xl font-black text-blue-400 font-mono" id="dash-roas">1.41x</div>
+            <div class="text-[10px] text-emerald-400 mt-1 font-bold">▲ OK</div>
+          </div>
+        </div>
+
+        <!-- KPIs Linha 2 (Secundários do Print 5) -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="bg-dark-900 border border-dark-750/80 p-4 rounded-2xl">
+            <span class="text-[11px] text-slate-400 block mb-1 font-semibold uppercase">Vendas Aprovadas</span>
+            <div class="text-lg font-black text-white font-mono" id="dash-vendas-aprovadas">1</div>
+            <div class="text-[10px] text-slate-500 mt-1 private-blur">R$ 34,51</div>
+          </div>
+
+          <div class="bg-dark-900 border border-dark-750/80 p-4 rounded-2xl">
+            <span class="text-[11px] text-slate-400 block mb-1 font-semibold uppercase">Vendas Pendentes</span>
+            <div class="text-lg font-black text-white font-mono private-blur" id="dash-vendas-pendentes">R$ 41,92</div>
+            <div class="text-[10px] text-amber-400 mt-1">2 vendas geradas</div>
+          </div>
+
+          <div class="bg-dark-900 border border-dark-750/80 p-4 rounded-2xl">
+            <span class="text-[11px] text-slate-400 block mb-1 font-semibold uppercase">Chargeback</span>
+            <div class="text-lg font-black text-white font-mono">0%</div>
+            <div class="text-[10px] text-emerald-400 mt-1">0 vendas</div>
+          </div>
+
+          <div class="bg-dark-900 border border-dark-750/80 p-4 rounded-2xl">
+            <span class="text-[11px] text-slate-400 block mb-1 font-semibold uppercase">Margem Líquida</span>
+            <div class="text-lg font-black text-blue-400 font-mono" id="dash-margem">28.9%</div>
+            <div class="text-[10px] text-emerald-400 mt-1 font-bold">▲ Positivo</div>
+          </div>
+        </div>
+
+        <!-- Linha: Saldo das Contas + Funil de Conversão (Print 5) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <!-- Saldo das Contas -->
+          <div class="lg:col-span-4 bg-dark-900 border border-dark-750/80 p-5 rounded-2xl flex flex-col justify-between">
+            <div>
+              <div class="flex items-center gap-2 mb-4">
+                <i data-lucide="lock" class="w-4 h-4 text-amber-400"></i>
+                <h3 class="text-xs font-bold text-white uppercase tracking-wider">Saldo das Contas</h3>
+              </div>
+              <div class="space-y-3">
+                <div class="flex items-center justify-between text-xs py-2 border-b border-dark-750/60">
+                  <div>
+                    <span class="font-bold text-white block">AGENCIA2</span>
+                    <span class="text-[11px] text-slate-400 font-mono">1020967616138580</span>
+                  </div>
+                  <span class="text-[11px] text-slate-400 font-mono">Carregando...</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-[11px] text-slate-400 border-t border-dark-750/60 pt-3 flex items-center justify-between">
+              <span>Sincronizado via Meta Graph API</span>
+              <span class="text-emerald-400 font-mono font-bold">Online</span>
+            </div>
+          </div>
+
+          <!-- Funil de Conversão Visual Meta Ads (Print 5) -->
+          <div class="lg:col-span-8 bg-dark-900 border border-dark-750/80 p-5 rounded-2xl">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <i data-lucide="filter" class="w-4 h-4 text-blue-400"></i>
+                <span>Funil de Conversão (Meta Ads)</span>
+              </h3>
+              <span class="text-[11px] text-slate-400 font-mono">Últimas 24 horas</span>
+            </div>
+
+            <!-- Gráfico Funil Estilizado -->
+            <div class="grid grid-cols-5 gap-1.5 my-3 text-center">
+              <div class="bg-blue-600/90 text-white p-3 rounded-l-xl flex flex-col justify-center">
+                <span class="text-sm font-black font-mono">100%</span>
+                <span class="text-[10px] text-blue-100 font-semibold uppercase mt-0.5">22</span>
+                <span class="text-[9px] text-blue-200 mt-1 uppercase">Cliques</span>
+              </div>
+              <div class="bg-blue-500/80 text-white p-3 flex flex-col justify-center">
+                <span class="text-sm font-black font-mono">81.8%</span>
+                <span class="text-[10px] text-blue-100 font-semibold uppercase mt-0.5">18</span>
+                <span class="text-[9px] text-blue-200 mt-1 uppercase">Vis. Página</span>
+              </div>
+              <div class="bg-indigo-600/80 text-white p-3 flex flex-col justify-center">
+                <span class="text-sm font-black font-mono">0%</span>
+                <span class="text-[10px] text-indigo-100 font-semibold uppercase mt-0.5">0</span>
+                <span class="text-[9px] text-indigo-200 mt-1 uppercase">ICs</span>
+              </div>
+              <div class="bg-purple-600/80 text-white p-3 flex flex-col justify-center">
+                <span class="text-sm font-black font-mono">13.6%</span>
+                <span class="text-[10px] text-purple-100 font-semibold uppercase mt-0.5">3</span>
+                <span class="text-[9px] text-purple-200 mt-1 uppercase">Vendas Inic.</span>
+              </div>
+              <div class="bg-emerald-500 text-black p-3 rounded-r-xl flex flex-col justify-center font-bold">
+                <span class="text-sm font-black font-mono">4.5%</span>
+                <span class="text-[10px] text-slate-900 font-semibold uppercase mt-0.5">1</span>
+                <span class="text-[9px] text-slate-800 mt-1 uppercase">Vendas Apr.</span>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] text-slate-400 mt-4 border-t border-dark-750/60 pt-3">
+              <span>Taxa Geral de Conversão (Cliques &rarr; Compras): <strong class="text-emerald-400 font-mono">4.54%</strong></span>
+              <span>Custo por Visita: <strong class="text-white font-mono private-blur">R$ 1,36</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Linha: Roscas e Gráficos de Vendas (Print 5) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Taxa de Aprovação Pix -->
+          <div class="bg-dark-900 border border-dark-750/80 p-5 rounded-2xl flex flex-col justify-between">
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-2">Taxa de Aprovação</h4>
+            <div class="flex items-center justify-between my-2">
+              <span class="text-xs text-slate-300">Pix</span>
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-full border-4 border-dark-750 border-t-blue-500 flex items-center justify-center font-mono font-bold text-xs text-blue-400">
+                  33.3%
+                </div>
+              </div>
+            </div>
+            <div class="text-[11px] text-slate-400 border-t border-dark-750/60 pt-2 flex items-center justify-between">
+              <span>1 pago de 3 gerados</span>
+              <span class="text-blue-400 font-mono">33.3%</span>
+            </div>
+          </div>
+
+          <!-- Vendas por Pagamento -->
+          <div class="bg-dark-900 border border-dark-750/80 p-5 rounded-2xl flex flex-col justify-between">
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-2">Vendas por Pagamento</h4>
+            <div class="flex items-center justify-center gap-6 my-2">
+              <div class="relative w-16 h-16 rounded-full border-4 border-blue-500 flex flex-col items-center justify-center">
+                <span class="text-[9px] text-slate-400 uppercase">Total</span>
+                <span class="text-sm font-black text-white font-mono">1</span>
+              </div>
+              <div class="text-xs space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                  <span class="text-slate-300">Pix: <strong>1 (100%)</strong></span>
+                </div>
+                <div class="flex items-center gap-2 text-slate-500">
+                  <span class="w-2.5 h-2.5 rounded-full bg-dark-700"></span>
+                  <span>Cartão: 0 (0%)</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-[11px] text-slate-400 border-t border-dark-750/60 pt-2">
+              Predominância: 100% Pix imediato
+            </div>
+          </div>
+
+          <!-- Vendas por Posicionamento -->
+          <div class="bg-dark-900 border border-dark-750/80 p-5 rounded-2xl flex flex-col justify-between">
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-2">Vendas por Posicionamento</h4>
+            <div class="flex items-center justify-between my-2">
+              <span class="text-xs text-slate-300">Facebook Feed</span>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-white font-mono">1</span>
+                <div class="w-6 h-6 rounded-full border-2 border-blue-500 flex items-center justify-center text-[10px] text-blue-400 font-mono">
+                  100%
+                </div>
+              </div>
+            </div>
+            <div class="text-[11px] text-slate-400 border-t border-dark-750/60 pt-2">
+              Feed Mobile gerando todo o faturamento
+            </div>
+          </div>
+        </div>
+
+        <!-- Linha: Gráfico de Vendas por Horário / Fonte (Print 5) -->
+        <div class="bg-dark-900 border border-dark-750/80 p-5 rounded-2xl">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider">Vendas por Horário / Fonte</h4>
+            <div class="flex items-center gap-2 text-xs">
+              <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+              <span class="text-slate-300">Facebook: <strong class="text-white font-mono">1 (100%)</strong></span>
+            </div>
+          </div>
+
+          <!-- Barras de Horário (00h até 23h) -->
+          <div class="h-32 flex items-end justify-between gap-1 border-b border-dark-750/60 pb-2 pt-4 px-2">
+            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">00h</span></div>
+            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">02h</span></div>
+            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">04h</span></div>
+            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">06h</span></div>
+            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">08h</span></div>
+            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">10h</span></div>
+            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">12h</span></div>
+            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-blue-500 rounded-t h-24 shadow-lg shadow-blue-500/30"></div><span class="text-[9px] text-blue-400 font-bold mt-1">14h</span></div>
+            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">16h</span></div>
+            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">18h</span></div>
+            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">20h</span></div>
+            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">22h</span></div>
+          </div>
+        </div>
+
+        <!-- Linha: Cards Inferiores (Taxas, Impostos e Produtos - Print 5) -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <!-- Vendas por Produto -->
+          <div class="bg-dark-900 border border-dark-750/80 p-5 rounded-2xl flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="text-xs font-bold text-white uppercase tracking-wider">Vendas por Produto</h4>
+                <span class="text-[10px] text-slate-400 font-mono">1 produto</span>
+              </div>
+              <div class="text-xs space-y-2 pt-2">
+                <div class="flex items-center justify-between text-slate-300">
+                  <span class="truncate max-w-[150px]">O Protocolo do Magnésio Celu...</span>
+                  <span class="font-bold font-mono text-white">1</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-[11px] text-slate-400 border-t border-dark-750/60 pt-2 flex items-center justify-between">
+              <span>Total:</span>
+              <span class="font-bold font-mono text-emerald-400">1 venda</span>
+            </div>
+          </div>
+
+          <!-- Taxas Plataforma (Kiwify / Cackto / Green) -->
+          <div class="bg-dark-900 border border-dark-750/80 p-5 rounded-2xl flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="text-xs font-bold text-white uppercase tracking-wider">Taxas Plataforma</h4>
+                <button onclick="openTaxModal()" class="text-slate-400 hover:text-amber-400"><i data-lucide="settings" class="w-3.5 h-3.5"></i></button>
+              </div>
+              <div class="text-lg font-black text-amber-400 font-mono private-blur" id="card-taxa-plataforma">R$ 3,48</div>
+              <p class="text-[11px] text-slate-400 mt-1">Pix/Boleto: 8,99% + R$ 2,49</p>
+            </div>
+            <div class="text-[11px] text-slate-400 border-t border-dark-750/60 pt-2">
+              Descontado na fonte pelo Checkout
+            </div>
+          </div>
+
+          <!-- Impostos da Empresa -->
+          <div class="bg-dark-900 border border-dark-750/80 p-5 rounded-2xl flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="text-xs font-bold text-white uppercase tracking-wider">Impostos da Empresa</h4>
+                <button onclick="openTaxModal()" class="text-slate-400 hover:text-amber-400"><i data-lucide="settings" class="w-3.5 h-3.5"></i></button>
+              </div>
+              <div class="text-lg font-black text-white font-mono private-blur" id="card-imposto-empresa">R$ 0,00</div>
+              <p class="text-[11px] text-slate-400 mt-1" id="label-taxa-empresa">Não configurado (0%)</p>
+            </div>
+            <div class="text-[11px] text-slate-400 border-t border-dark-750/60 pt-2">
+              Nota fiscal / Simples Nacional
+            </div>
+          </div>
+
+          <!-- Imposto Meta Ads (Facebook) -->
+          <div class="bg-dark-900 border border-dark-750/80 p-5 rounded-2xl flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="text-xs font-bold text-white uppercase tracking-wider">Imposto Meta Ads</h4>
+                <button onclick="openTaxModal()" class="text-slate-400 hover:text-amber-400"><i data-lucide="settings" class="w-3.5 h-3.5"></i></button>
+              </div>
+              <div class="text-lg font-black text-blue-400 font-mono private-blur" id="card-imposto-meta">R$ 3,07</div>
+              <p class="text-[11px] text-slate-400 mt-1" id="label-taxa-meta">12,50% do gasto em ads</p>
+            </div>
+            <div class="text-[11px] text-slate-400 border-t border-dark-750/60 pt-2">
+              IOF & Impostos sobre faturas Meta
+            </div>
+          </div>
+        </div>
+
+        <!-- Linha: Vendas por Localização (Mundo & Brasil - Print 5) -->
+        <div class="bg-dark-900 border border-dark-750/80 p-5 rounded-2xl">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <i data-lucide="map-pin" class="w-4 h-4 text-emerald-400"></i>
+              <span>Vendas por Localização</span>
+            </h4>
+            <span class="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+              🇧🇷 Brasil lidera - 1 venda (100%)
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Mundo -->
+            <div class="bg-dark-950 p-4 rounded-xl border border-dark-750">
+              <span class="text-xs font-bold text-slate-300 block mb-2">● MUNDO</span>
+              <div class="h-32 flex items-center justify-center text-slate-500 text-xs">
+                <div class="text-center">
+                  <i data-lucide="globe" class="w-8 h-8 text-slate-600 mx-auto mb-1"></i>
+                  <span>América do Sul (100%)</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between text-xs pt-2 border-t border-dark-800">
+                <span class="text-slate-300">🇧🇷 Brasil</span>
+                <span class="font-mono font-bold text-white">1 (100%)</span>
+              </div>
+            </div>
+
+            <!-- Brasil -->
+            <div class="bg-dark-950 p-4 rounded-xl border border-dark-750">
+              <span class="text-xs font-bold text-slate-300 block mb-2">● BRASIL</span>
+              <div class="h-32 flex items-center justify-center text-slate-500 text-xs">
+                <div class="text-center">
+                  <i data-lucide="map" class="w-8 h-8 text-blue-500/50 mx-auto mb-1"></i>
+                  <span>Região Sudeste (São Paulo)</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between text-xs pt-2 border-t border-dark-800">
+                <span class="text-slate-300">São Paulo, SP</span>
+                <span class="font-mono font-bold text-white">1 (100%)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- ABA 2: CAMPANHAS COM AS 4 SUB-ABAS (PRINTS 1, 2, 3 E 4)  -->
+      <!-- ======================================================== -->
+      <div id="tab-campanhas" class="hidden space-y-4">
+        
+        <!-- Header da Página de Campanhas (Prints 1, 2, 3, 4) -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <h2 class="text-xl font-bold text-white">Campanhas</h2>
+            <button onclick="togglePrivateMode()" class="text-slate-400 hover:text-white p-1 rounded bg-dark-850 border border-dark-750">
+              <i data-lucide="eye" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <button onclick="showToast('Sincronizado automaticamente com o Gerenciador de Anúncios', 'info')" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-2 shadow transition">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span>Criar Campanha</span>
+          </button>
+        </div>
+
+        <!-- As 4 Sub-Abas do Topo (Contas, Campanhas, Conjuntos, Anúncios) -->
+        <div class="flex items-center gap-6 border-b border-dark-750 pb-2 text-xs font-semibold">
+          <button onclick="switchCampaignSubTab('contas')" id="subtab-btn-contas" class="subtab-item text-slate-400 hover:text-white pb-2 transition">Contas</button>
+          <button onclick="switchCampaignSubTab('campanhas')" id="subtab-btn-campanhas" class="subtab-item text-blue-400 border-b-2 border-blue-500 pb-2 -mb-2.5 transition">Campanhas</button>
+          <button onclick="switchCampaignSubTab('conjuntos')" id="subtab-btn-conjuntos" class="subtab-item text-slate-400 hover:text-white pb-2 transition">Conjuntos</button>
+          <button onclick="switchCampaignSubTab('anuncios')" id="subtab-btn-anuncios" class="subtab-item text-slate-400 hover:text-white pb-2 transition">Anúncios</button>
+        </div>
+
+        <!-- Filtros Superiores da Tabela (Status, Período, Busca, Gerenciador, Colunas, Cores, Exportar) -->
+        <div class="bg-dark-900 border border-dark-750 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Status Select -->
+            <div class="flex items-center gap-1.5 bg-dark-850 px-3 py-1.5 rounded-xl border border-dark-750">
+              <span class="text-slate-400 text-[11px]">Status:</span>
+              <select id="camp-filter-status" onchange="renderActiveSubTabTable()" class="bg-transparent text-white font-medium outline-none cursor-pointer">
+                <option value="ativo" selected>Ativo</option>
+                <option value="todos">Todos</option>
+                <option value="pausado">Pausado</option>
+              </select>
+            </div>
+
+            <!-- Período Select -->
+            <div class="flex items-center gap-1.5 bg-dark-850 px-3 py-1.5 rounded-xl border border-dark-750">
+              <span class="text-slate-400 text-[11px]">Período:</span>
+              <select id="camp-filter-period" onchange="renderActiveSubTabTable()" class="bg-transparent text-white font-medium outline-none cursor-pointer">
+                <option value="hoje" selected>Hoje</option>
+                <option value="ontem">Ontem</option>
+                <option value="7d">Últimos 7 dias</option>
+                <option value="mes">Este mês</option>
+              </select>
+            </div>
+
+            <!-- Search input -->
+            <div class="relative w-48 sm:w-56">
+              <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+              <input type="text" id="camp-search-input" onkeyup="filterSubTabBySearch()" placeholder="Buscar por nome..." class="w-full bg-dark-850 border border-dark-750 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white outline-none focus:border-blue-500">
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="showToast('Abrindo Gerenciador de Anúncios...', 'info')" class="px-3 py-1.5 rounded-xl bg-dark-850 hover:bg-dark-800 border border-dark-750 text-slate-200 text-xs flex items-center gap-1.5">
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+              <span>Gerenciador</span>
+            </button>
+            <button onclick="showToast('Personalizar colunas...', 'info')" class="px-3 py-1.5 rounded-xl bg-dark-850 hover:bg-dark-800 border border-dark-750 text-slate-200 text-xs flex items-center gap-1.5">
+              <i data-lucide="columns" class="w-3.5 h-3.5"></i>
+              <span>Colunas</span>
+            </button>
+            <button onclick="showToast('Legenda de cores: Verde = Lucro | Vermelho = Prejuízo', 'info')" class="px-3 py-1.5 rounded-xl bg-dark-850 hover:bg-dark-800 border border-dark-750 text-slate-200 text-xs flex items-center gap-1.5">
+              <i data-lucide="palette" class="w-3.5 h-3.5"></i>
+              <span>Cores</span>
+            </button>
+            <button onclick="refreshDashboard()" class="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs">Atualizar</button>
+            <button onclick="exportTableToCSV()" class="px-3 py-1.5 rounded-xl bg-dark-850 hover:bg-dark-800 border border-dark-750 text-slate-200 text-xs flex items-center gap-1.5">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>
+              <span>Exportar</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 1. SUB-TAB: CONTAS (PRINT 1) -->
+        <div id="subtab-contas-view" class="hidden bg-dark-900 border border-dark-750 rounded-2xl overflow-hidden shadow-2xl">
+          <div class="p-3 bg-dark-850/80 border-b border-dark-750 text-xs text-slate-400 font-mono flex items-center justify-between">
+            <span>Saldo atualizado há 40 min</span>
+            <button onclick="showToast('Saldos atualizados!', 'success')" class="text-blue-400 hover:underline">Atualizar saldo</button>
+          </div>
+          <table class="w-full text-left text-xs whitespace-nowrap">
+            <thead class="bg-dark-850 text-slate-400 text-[11px] border-b border-dark-750 uppercase font-semibold">
+              <tr>
+                <th class="py-3.5 px-6">CONTA</th>
+                <th class="py-3.5 px-6">SALDO</th>
+                <th class="py-3.5 px-6 text-right">STATUS</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-dark-750/50">
+              <tr class="hover:bg-dark-850/60">
+                <td class="py-4 px-6">
+                  <div class="font-bold text-white">AGENCIA2</div>
+                  <div class="text-[11px] text-slate-400 font-mono">1020967616138580</div>
+                </td>
+                <td class="py-4 px-6 font-mono text-slate-400">—</td>
+                <td class="py-4 px-6 text-right">
+                  <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-600 text-white">Ativo</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="p-3 bg-dark-950 border-t border-dark-750 text-xs font-mono font-bold text-slate-300">
+            1 CONTA
+          </div>
+        </div>
+
+        <!-- 2. SUB-TAB: CAMPANHAS (PRINT 2) -->
+        <div id="subtab-campanhas-view" class="bg-dark-900 border border-dark-750 rounded-2xl overflow-hidden shadow-2xl">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs whitespace-nowrap">
+              <thead class="bg-dark-850 text-slate-400 text-[11px] border-b border-dark-750 uppercase font-semibold">
+                <tr>
+                  <th class="py-3 px-3 text-center"><input type="checkbox" class="rounded bg-dark-700"></th>
+                  <th class="py-3 px-3">STATUS</th>
+                  <th class="py-3 px-4">CAMPANHA</th>
+                  <th class="py-3 px-3">ÚLTIMA ATUALIZAÇÃO</th>
+                  <th class="py-3 px-3">ORÇAMENTO</th>
+                  <th class="py-3 px-3">GASTO</th>
+                  <th class="py-3 px-3">LUCRO</th>
+                  <th class="py-3 px-3">FATURAMENTO</th>
+                  <th class="py-3 px-3">VENDAS</th>
+                  <th class="py-3 px-3">ROAS</th>
+                  <th class="py-3 px-3">MARGEM</th>
+                  <th class="py-3 px-3">IC</th>
+                  <th class="py-3 px-3">CUSTO/IC</th>
+                  <th class="py-3 px-3">VENDAS PEND.</th>
+                  <th class="py-3 px-3">CLIQUES</th>
+                  <th class="py-3 px-3">CPC</th>
+                  <th class="py-3 px-3">CPA</th>
+                  <th class="py-3 px-3">CPM</th>
+                  <th class="py-3 px-3">CTR</th>
+                  <th class="py-3 px-3">ARPU</th>
+                  <th class="py-3 px-3">% IC</th>
+                  <th class="py-3 px-3">IMPRESSÕES</th>
+                  <th class="py-3 px-3">VISITAS</th>
+                </tr>
+              </thead>
+              <tbody id="campanhas-subtab-tbody" class="divide-y divide-dark-750/50 font-mono text-slate-200">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+          <div class="p-3 bg-dark-950 border-t border-dark-750 flex items-center justify-between text-xs font-mono">
+            <span class="font-bold text-white" id="campanhas-footer-count">1 CAMPANHA</span>
+            <div class="flex items-center gap-4">
+              <span>Gasto: <strong class="text-white private-blur">R$ 24,52</strong></span>
+              <span>Lucro: <strong class="text-blue-400 font-bold private-blur">R$ 9,99</strong></span>
+              <span>Faturamento: <strong class="text-white private-blur">R$ 34,51</strong></span>
+              <span>ROAS: <strong class="text-blue-400 font-bold">1,41</strong></span>
+              <span>Margem: <strong class="text-blue-400 font-bold">28.9%</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. SUB-TAB: CONJUNTOS (PRINT 3) -->
+        <div id="subtab-conjuntos-view" class="hidden bg-dark-900 border border-dark-750 rounded-2xl overflow-hidden shadow-2xl">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs whitespace-nowrap">
+              <thead class="bg-dark-850 text-slate-400 text-[11px] border-b border-dark-750 uppercase font-semibold">
+                <tr>
+                  <th class="py-3 px-3 text-center"><input type="checkbox" class="rounded bg-dark-700"></th>
+                  <th class="py-3 px-3">STATUS</th>
+                  <th class="py-3 px-4">CONJUNTO</th>
+                  <th class="py-3 px-3">ÚLTIMA ATUALIZAÇÃO</th>
+                  <th class="py-3 px-3">ORÇAMENTO</th>
+                  <th class="py-3 px-3">GASTO</th>
+                  <th class="py-3 px-3">LUCRO</th>
+                  <th class="py-3 px-3">FATURAMENTO</th>
+                  <th class="py-3 px-3">VENDAS</th>
+                  <th class="py-3 px-3">ROAS</th>
+                  <th class="py-3 px-3">MARGEM</th>
+                  <th class="py-3 px-3">IC</th>
+                  <th class="py-3 px-3">CUSTO/IC</th>
+                  <th class="py-3 px-3">LANCE</th>
+                  <th class="py-3 px-3">VENDAS PEND.</th>
+                  <th class="py-3 px-3">CLIQUES</th>
+                  <th class="py-3 px-3">CPC</th>
+                  <th class="py-3 px-3">CPA</th>
+                  <th class="py-3 px-3">CPM</th>
+                  <th class="py-3 px-3">CTR</th>
+                  <th class="py-3 px-3">ARPU</th>
+                  <th class="py-3 px-3">% IC</th>
+                  <th class="py-3 px-3">IMPRESSÕES</th>
+                  <th class="py-3 px-3">VISITAS</th>
+                </tr>
+              </thead>
+              <tbody id="conjuntos-subtab-tbody" class="divide-y divide-dark-750/50 font-mono text-slate-200">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+          <div class="p-3 bg-dark-950 border-t border-dark-750 flex items-center justify-between text-xs font-mono">
+            <span class="font-bold text-white" id="conjuntos-footer-count">1 CONJUNTO</span>
+            <div class="flex items-center gap-4">
+              <span>Gasto: <strong class="text-white private-blur">R$ 24,52</strong></span>
+              <span>Lucro: <strong class="text-blue-400 font-bold private-blur">R$ 9,99</strong></span>
+              <span>Faturamento: <strong class="text-white private-blur">R$ 34,51</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. SUB-TAB: ANÚNCIOS (PRINT 4 COM BOTÃO PREVIEW) -->
+        <div id="subtab-anuncios-view" class="hidden bg-dark-900 border border-dark-750 rounded-2xl overflow-hidden shadow-2xl">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs whitespace-nowrap">
+              <thead class="bg-dark-850 text-slate-400 text-[11px] border-b border-dark-750 uppercase font-semibold">
+                <tr>
+                  <th class="py-3 px-3 text-center"><input type="checkbox" class="rounded bg-dark-700"></th>
+                  <th class="py-3 px-3">STATUS</th>
+                  <th class="py-3 px-4">ANÚNCIO</th>
+                  <th class="py-3 px-3">ÚLTIMA ATUALIZAÇÃO</th>
+                  <th class="py-3 px-3 text-center">PREVIEW</th>
+                  <th class="py-3 px-3">GASTO</th>
+                  <th class="py-3 px-3">LUCRO</th>
+                  <th class="py-3 px-3">FATURAMENTO</th>
+                  <th class="py-3 px-3">VENDAS</th>
+                  <th class="py-3 px-3">ROAS</th>
+                  <th class="py-3 px-3">MARGEM</th>
+                  <th class="py-3 px-3">IC</th>
+                  <th class="py-3 px-3">CUSTO/IC</th>
+                  <th class="py-3 px-3">VENDAS PEND.</th>
+                  <th class="py-3 px-3">CLIQUES</th>
+                  <th class="py-3 px-3">CPC</th>
+                  <th class="py-3 px-3">CPA</th>
+                  <th class="py-3 px-3">CPM</th>
+                  <th class="py-3 px-3">CTR</th>
+                  <th class="py-3 px-3">ARPU</th>
+                  <th class="py-3 px-3">% IC</th>
+                  <th class="py-3 px-3">IMPRESSÕES</th>
+                  <th class="py-3 px-3">VISITAS</th>
+                </tr>
+              </thead>
+              <tbody id="anuncios-subtab-tbody" class="divide-y divide-dark-750/50 font-mono text-slate-200">
+                <!-- Dynamically populated from Print 4 -->
+              </tbody>
+            </table>
+          </div>
+          <div class="p-3 bg-dark-950 border-t border-dark-750 flex items-center justify-between text-xs font-mono">
+            <span class="font-bold text-white" id="anuncios-footer-count">5 ANÚNCIOS</span>
+            <div class="flex items-center gap-4">
+              <span>Gasto: <strong class="text-white private-blur">R$ 24,52</strong></span>
+              <span>Lucro: <strong class="text-blue-400 font-bold private-blur">R$ 9,99</strong></span>
+              <span>Faturamento: <strong class="text-white private-blur">R$ 34,51</strong></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- DEMAIS ABAS: RESUMO, AO VIVO, VENDAS, REGRAS, ETC.       -->
+      <!-- ======================================================== -->
+      <div id="tab-resumo" class="hidden space-y-6">
+        <!-- Globo 3D Resumo e Feed ao Vivo -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div class="lg:col-span-5 bg-dark-900 border border-dark-750/80 p-5 rounded-2xl flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold text-white flex items-center gap-2">
+                <i data-lucide="globe" class="w-4 h-4 text-emerald-400"></i>
+                <span>Alcance Global (Ao Vivo)</span>
+              </h3>
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            </div>
+            <div class="relative w-full h-64 flex items-center justify-center my-2">
+              <canvas id="globe-canvas" width="300" height="300" class="cursor-grab"></canvas>
+            </div>
+            <div class="text-[11px] text-slate-400 border-t border-dark-750/60 pt-3 flex items-center justify-between">
+              <span>Último disparo: São Paulo, Brasil</span>
+              <span class="text-emerald-400 font-mono font-bold">UTC-3</span>
+            </div>
+          </div>
+
+          <!-- Feed de Vendas -->
+          <div class="lg:col-span-7 bg-dark-900 border border-dark-750/80 p-5 rounded-2xl flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-xs font-bold text-white flex items-center gap-2">
+                <i data-lucide="zap" class="w-4 h-4 text-emerald-400"></i>
+                <span>Vendas em tempo real</span>
+              </h3>
+              <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                ao vivo
+              </span>
+            </div>
+            <div id="live-sales-feed" class="space-y-2.5 overflow-y-auto max-h-[300px] pr-1"></div>
+            <button onclick="switchTab('vendas')" class="w-full mt-3 py-2 rounded-xl bg-dark-850 hover:bg-dark-800 border border-dark-750 text-slate-300 text-xs font-semibold">
+              Ver todas as vendas analíticas
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Ao Vivo (Globo Expandido) -->
+      <div id="tab-aovivo" class="hidden space-y-4">
+        <div class="bg-dark-900 border border-dark-750 rounded-2xl p-6 text-center">
+          <h2 class="text-lg font-black text-white">Monitoramento de Compradores ao Vivo</h2>
+          <p class="text-xs text-slate-400 max-w-lg mx-auto mt-1 mb-6">Cada nó aceso no globo representa um checkout aprovado ou visitado nos últimos minutos.</p>
+          <div class="w-full flex items-center justify-center">
+            <canvas id="globe-canvas-large" width="440" height="440" class="cursor-grab max-w-full"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Vendas (Analítica) -->
+      <div id="tab-vendas" class="hidden space-y-4">
+        <div class="bg-dark-900 border border-dark-750 rounded-2xl p-5">
+          <h3 class="text-base font-bold text-white mb-4">Transações & Rastreamento com UTMs</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs whitespace-nowrap">
+              <thead class="bg-dark-850 text-slate-400 text-[11px] border-b border-dark-750">
+                <tr>
+                  <th class="py-3 px-4">Hora</th>
+                  <th class="py-3 px-4">Plataforma</th>
+                  <th class="py-3 px-4">Cliente</th>
+                  <th class="py-3 px-4">Valor</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4">utm_source</th>
+                  <th class="py-3 px-4">utm_campaign</th>
+                  <th class="py-3 px-4">utm_content</th>
+                  <th class="py-3 px-4 text-center">Meta CAPI</th>
+                </tr>
+              </thead>
+              <tbody id="vendas-analiticas-body" class="divide-y divide-dark-750/50 font-mono"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Visitas -->
+      <div id="tab-visitas" class="hidden space-y-4">
+        <div class="bg-dark-900 border border-dark-750 rounded-2xl p-5">
+          <h3 class="text-base font-bold text-white mb-4">Pageviews & Sessões em Tempo Real</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs whitespace-nowrap">
+              <thead class="bg-dark-850 text-slate-400 text-[11px] border-b border-dark-750">
+                <tr>
+                  <th class="py-3 px-4">Data/Hora</th>
+                  <th class="py-3 px-4">IP / Local</th>
+                  <th class="py-3 px-4">Dispositivo</th>
+                  <th class="py-3 px-4">utm_source</th>
+                  <th class="py-3 px-4">utm_campaign</th>
+                  <th class="py-3 px-4 text-center">Checkout Clicado</th>
+                </tr>
+              </thead>
+              <tbody id="visitas-table-body" class="divide-y divide-dark-750/50 font-mono"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Regras Automáticas (PRO) -->
+      <div id="tab-regras" class="hidden space-y-6">
+        <div class="bg-dark-900 border border-dark-750 p-6 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-amber-500 text-black">Módulo PRO</span>
+              <h2 class="text-base font-bold text-white">Regras Automáticas de Otimização & Escala</h2>
+            </div>
+            <p class="text-xs text-slate-400 max-w-2xl">
+              Automatize pausas (stop-loss), aumento de orçamento (+20%) e proteção de margem com cruzamento dos dados da Kiwify, Cackto e Green com o Facebook Ads.
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="runAutoRulesNow()" class="px-4 py-2.5 rounded-xl bg-dark-800 hover:bg-dark-750 border border-dark-700 text-white font-bold text-xs flex items-center gap-2">
+              <i data-lucide="play" class="w-3.5 h-3.5 text-emerald-400"></i>
+              <span>Executar Regras Agora</span>
+            </button>
+            <button onclick="openCreateRuleModal()" class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs flex items-center gap-2">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Nova Regra</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-dark-900 border border-dark-750 rounded-2xl overflow-hidden">
+          <div class="p-4 border-b border-dark-750 flex items-center justify-between">
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider">Regras Configuradas</h3>
+            <span class="text-xs font-mono text-slate-400" id="rules-count-badge">4 regras ativas</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs whitespace-nowrap">
+              <thead class="bg-dark-850 text-slate-400 text-[11px] border-b border-dark-750 uppercase">
+                <tr>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4">Nome da Regra</th>
+                  <th class="py-3 px-4">Aplica-se a</th>
+                  <th class="py-3 px-4">Contas / Produtos</th>
+                  <th class="py-3 px-4">Ação</th>
+                  <th class="py-3 px-4">Condição Gatilho</th>
+                  <th class="py-3 px-4">Última Execução</th>
+                </tr>
+              </thead>
+              <tbody id="rules-table-body" class="divide-y divide-dark-750/50"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Integrações (Print LowTrack) -->
+      <div id="tab-integracoes" class="hidden space-y-6">
+        <div>
+          <h2 class="text-lg font-bold text-white">Integrações de Contas</h2>
+          <p class="text-xs text-slate-400">Conecte suas contas de anúncio da Meta para sincronizar gastos e disparar CAPI</p>
+        </div>
+
+        <div class="bg-dark-900 border border-dark-750 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-sm">
+              L
+            </div>
+            <div>
+              <h4 class="text-sm font-bold text-white">Leticia Rocha</h4>
+              <div class="text-[11px] text-slate-400 font-mono">ID: 1131719866074357 • 8 conta(s) de anúncio</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="px-3 py-1.5 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-bold">Conectado</span>
+            <button onclick="showToast('Reconectando token da Meta API...', 'info')" class="px-3.5 py-1.5 rounded-xl bg-dark-800 text-slate-200 text-xs font-semibold border border-dark-700">Reconectar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Notificações (Print LowTrack) -->
+      <div id="tab-notificacoes" class="hidden space-y-6">
+        <div>
+          <h2 class="text-lg font-bold text-white">Configurações de Notificações</h2>
+          <p class="text-xs text-slate-400">Configure avisos de vendas com som de moeda e relatórios programados</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-dark-900 border border-dark-750 p-6 rounded-2xl space-y-5">
+            <h3 class="text-sm font-bold text-white mb-1">Notificações de Venda & Som</h3>
+            
+            <div class="flex items-center justify-between py-2 border-b border-dark-750/70">
+              <div>
+                <span class="text-xs font-semibold text-white block">Tocar Moedinha (Venda Aprovada)</span>
+                <span class="text-[11px] text-slate-400">Som idêntico ao da Kiwify / Hotmart</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <button onclick="playCashRegisterSound()" class="px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-1.5">
+                  <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
+                  <span>Testar Som</span>
+                </button>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="toggle-sound-enabled" checked class="sr-only peer switch-toggle">
+                  <div class="w-10 h-5 bg-dark-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                </label>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between py-2 border-b border-dark-750/70">
+              <div>
+                <span class="text-xs font-semibold text-white block">Ocultar nome do produto</span>
+                <span class="text-[11px] text-slate-400">Exibe apenas: "Venda Aprovada! Valor: R$ 34,51"</span>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="toggle-hide-product-name" checked class="sr-only peer switch-toggle">
+                <div class="w-10 h-5 bg-dark-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+              </label>
+            </div>
+          </div>
+
+          <div class="bg-dark-900 border border-dark-750 p-6 rounded-2xl space-y-4">
+            <h3 class="text-sm font-bold text-white mb-1">Horários de Relatório Diário</h3>
+            <div class="space-y-3 text-xs">
+              <div class="flex items-center justify-between py-1.5 border-b border-dark-750/60">
+                <span class="text-slate-300">Notificação das 08:00</span>
+                <input type="checkbox" class="rounded bg-dark-800">
+              </div>
+              <div class="flex items-center justify-between py-1.5 border-b border-dark-750/60">
+                <span class="text-slate-300">Notificação das 12:00</span>
+                <input type="checkbox" checked class="rounded bg-dark-800">
+              </div>
+              <div class="flex items-center justify-between py-1.5 border-b border-dark-750/60">
+                <span class="text-slate-300">Notificação das 18:00</span>
+                <input type="checkbox" class="rounded bg-dark-800">
+              </div>
+              <div class="flex items-center justify-between py-1.5">
+                <span class="text-slate-300">Notificação das 23:00</span>
+                <input type="checkbox" class="rounded bg-dark-800">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Simulador -->
+      <div id="tab-simulador" class="hidden space-y-6">
+        <div class="bg-dark-900 border border-dark-750 p-6 rounded-2xl space-y-4 max-w-2xl mx-auto">
+          <h3 class="text-sm font-bold text-white">Disparar Venda de Teste (Kiwify, Cackto, Green)</h3>
+          <p class="text-xs text-slate-400">Ao clicar, o som da moeda tocará e os cards de faturamento, lucro e impostos recalcularão na hora.</p>
+          <form onsubmit="handleSimulatorSubmit(event)" class="space-y-3 text-xs">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-slate-400 mb-1">Plataforma</label>
+                <select id="sim-plat" class="w-full bg-dark-850 border border-dark-750 rounded-xl p-2.5 text-white outline-none">
+                  <option value="kiwify">Kiwify</option>
+                  <option value="cackto" selected>Cackto</option>
+                  <option value="green">Green (Greenn)</option>
+                  <option value="hotmart">Hotmart</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-slate-400 mb-1">Valor da Venda (R$)</label>
+                <input type="number" id="sim-price" value="34.51" step="0.01" class="w-full bg-dark-850 border border-dark-750 rounded-xl p-2.5 text-white font-mono">
+              </div>
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Nome do Cliente</label>
+              <input type="text" id="sim-client" value="Carlos Eduardo Ramos" class="w-full bg-dark-850 border border-dark-750 rounded-xl p-2.5 text-white">
+            </div>
+            <button type="submit" class="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold uppercase text-xs transition">
+              Disparar Venda & Tocar Moedinha
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Tab Instalação Celular -->
+      <div id="tab-instalacao" class="hidden space-y-6">
+        <div class="bg-dark-900 border border-dark-750 p-6 rounded-2xl space-y-4">
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <i data-lucide="smartphone" class="w-5 h-5 text-emerald-400"></i>
+            <span>Instalação Imediata no iPhone e Android</span>
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div class="p-4 bg-dark-850 rounded-xl border border-dark-750 space-y-2">
+              <span class="text-sm font-bold text-white flex items-center gap-1.5">🍏 No iPhone (Safari)</span>
+              <ol class="list-decimal list-inside space-y-1 text-slate-300">
+                <li>Abra o link do seu tracker no <strong>Safari</strong>.</li>
+                <li>Toque no botão <strong>Compartilhar</strong> (ícone com quadrado e seta para cima).</li>
+                <li>Selecione <strong>"Adicionar à Tela de Início"</strong>.</li>
+                <li>O ícone aparecerá como aplicativo nativo em tela cheia.</li>
+              </ol>
+            </div>
+            <div class="p-4 bg-dark-850 rounded-xl border border-dark-750 space-y-2">
+              <span class="text-sm font-bold text-white flex items-center gap-1.5">🤖 No Android (Chrome)</span>
+              <ol class="list-decimal list-inside space-y-1 text-slate-300">
+                <li>Abra o link no <strong>Google Chrome</strong>.</li>
+                <li>Toque nos 3 pontinhos no canto superior.</li>
+                <li>Selecione <strong>"Instalar aplicativo"</strong> ou "Adicionar à tela inicial".</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: CONFIGURAÇÃO DE TAXAS & IMPOSTOS (NOVO)              -->
+  <!-- ============================================================ -->
+  <div id="tax-config-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md hidden transition-all duration-300">
+    <div class="bg-dark-900 border border-dark-750 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+      <div class="px-6 py-4 border-b border-dark-750 flex items-center justify-between bg-dark-850">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+            <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">Configurar Taxas e Impostos</h3>
+            <p class="text-[11px] text-slate-400">Esses valores são descontados automaticamente para calcular o Lucro Real</p>
+          </div>
+        </div>
+        <button onclick="closeTaxModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <form onsubmit="handleSaveTaxes(event)" class="p-6 space-y-4 text-xs">
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">Taxa Meta Ads (Imposto Facebook)</label>
+          <div class="flex items-center gap-2">
+            <input type="number" id="tax-input-meta" step="0.01" value="12.50" class="w-full bg-dark-850 border border-dark-750 rounded-xl p-2.5 text-white font-mono outline-none focus:border-amber-500">
+            <span class="text-slate-400 font-bold">%</span>
+          </div>
+          <span class="text-[10px] text-slate-500 mt-1 block">Calculado sobre todo o valor gasto em anúncios (spend).</span>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">Imposto da Empresa (Nota Fiscal / Simples)</label>
+          <div class="flex items-center gap-2">
+            <input type="number" id="tax-input-empresa" step="0.01" value="0.00" class="w-full bg-dark-850 border border-dark-750 rounded-xl p-2.5 text-white font-mono outline-none focus:border-amber-500">
+            <span class="text-slate-400 font-bold">%</span>
+          </div>
+          <span class="text-[10px] text-slate-500 mt-1 block">Calculado sobre o faturamento bruto das vendas.</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-300 font-semibold mb-1">Taxa Checkout (%)</label>
+            <div class="flex items-center gap-1.5">
+              <input type="number" id="tax-input-plat-pct" step="0.01" value="8.99" class="w-full bg-dark-850 border border-dark-750 rounded-xl p-2.5 text-white font-mono outline-none focus:border-amber-500">
+              <span class="text-slate-400 font-bold">%</span>
+            </div>
+          </div>
+          <div>
+            <label class="block text-slate-300 font-semibold mb-1">Taxa Fixa (R$)</label>
+            <div class="flex items-center gap-1.5">
+              <input type="number" id="tax-input-plat-fix" step="0.01" value="2.49" class="w-full bg-dark-850 border border-dark-750 rounded-xl p-2.5 text-white font-mono outline-none focus:border-amber-500">
+              <span class="text-slate-400 font-bold">R$</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3 bg-dark-950 rounded-xl border border-dark-750 text-[11px] text-slate-400">
+          ✓ Todos os cards de <strong>Lucro Líquido</strong>, <strong>Margem</strong> e <strong>Tabelas de Anúncios</strong> são recalculados imediatamente após salvar.
+        </div>
+
+        <div class="pt-3 border-t border-dark-750 flex items-center justify-end gap-2">
+          <button type="button" onclick="closeTaxModal()" class="px-4 py-2 rounded-xl bg-dark-800 text-slate-300">Cancelar</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold shadow">Salvar Configurações</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: PRÉVIA DO CRIATIVO (PRINT 4 - BOTÃO DE OLHO)         -->
+  <!-- ============================================================ -->
+  <div id="creative-preview-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md hidden transition-all duration-300">
+    <div class="bg-dark-900 border border-dark-750 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl relative">
+      <div class="px-5 py-4 border-b border-dark-750 flex items-center justify-between bg-dark-850">
+        <div>
+          <h3 class="text-sm font-bold text-white tracking-wide" id="modal-ad-title">ad06_37</h3>
+          <p class="text-[11px] text-slate-400 font-mono">Conta: AGENCIA2 • Facebook Feed</p>
+        </div>
+        <button onclick="closeCreativeModal()" class="text-slate-400 hover:text-white p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="p-6 space-y-4 overflow-y-auto">
+        <div class="aspect-[9/12] max-w-[280px] mx-auto rounded-2xl bg-gradient-to-br from-slate-900 to-dark-850 border border-dark-700 flex flex-col items-center justify-center p-4 text-center relative shadow-2xl">
+          <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-3">
+            <i data-lucide="play" class="w-6 h-6 fill-emerald-400"></i>
+          </div>
+          <span class="text-xs font-bold text-white uppercase font-mono tracking-wider" id="modal-ad-headline">Criativo de Alta Conversão</span>
+          <span class="text-[11px] text-emerald-400 font-mono mt-1" id="modal-ad-roas-badge">ROAS: 2,18 • 1 Venda</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 text-center text-xs">
+          <div class="bg-dark-850 p-2.5 rounded-xl border border-dark-750">
+            <span class="text-[10px] text-slate-400 block">Gasto</span>
+            <span class="font-bold text-white font-mono" id="modal-ad-spend">R$ 15,86</span>
+          </div>
+          <div class="bg-dark-850 p-2.5 rounded-xl border border-dark-750">
+            <span class="text-[10px] text-slate-400 block">Lucro</span>
+            <span class="font-bold text-emerald-400 font-mono" id="modal-ad-profit">R$ 18,65</span>
+          </div>
+          <div class="bg-dark-850 p-2.5 rounded-xl border border-dark-750">
+            <span class="text-[10px] text-slate-400 block">Margem</span>
+            <span class="font-bold text-blue-400 font-mono" id="modal-ad-margin">54.0%</span>
+          </div>
+        </div>
+
+        <div class="p-3 bg-dark-950 rounded-xl border border-dark-750 text-xs font-mono text-slate-300 break-all select-all" id="modal-ad-utm-link">
+          https://seusite.com.br/?utm_source=facebook&utm_campaign=CO3_Magnes&utm_content=ad06_37
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT JS PRINCIPAL -->
+  <script>
+    // ESTADO GLOBAL DE TAXAS & IMPOSTOS
+    let taxConfig = {
+      metaTaxPct: 12.50, // 12,50% sobre spend
+      empresaTaxPct: 0.00, // Imposto NF
+      platPct: 8.99, // Taxa checkout
+      platFix: 2.49 // Taxa fixa R$
+    };
+
+    // DADOS DAS CAMPANHAS (PRINTS 1, 2, 3 E 4 EXATOS)
+    const subTabCampanhasData = [
+      {
+        id: "camp_1",
+        name: "CO3_Magnes_testecriativo3 ...",
+        account: "AGENCIA2",
+        updated: "N/A",
+        budget: "R$ 77,00",
+        budgetType: "Diário",
+        spend: 24.52,
+        sales: 1,
+        grossAmount: 37.99,
+        roas: 1.41,
+        margin: "28.9%",
+        ic: 2,
+        costIc: 12.26,
+        salesPend: 2,
+        clicks: 22,
+        cpc: 1.11,
+        cpa: 24.52,
+        cpm: 79.61,
+        ctr: "7.14%",
+        arpu: 34.51,
+        pctIc: "9.09%",
+        impressions: 308,
+        visits: 16
+      }
+    ];
+
+    const subTabConjuntosData = [
+      {
+        id: "conj_1",
+        name: "aberto_35",
+        account: "AGENCIA2",
+        updated: "N/A",
+        budget: "Usando orç. campanha",
+        spend: 24.52,
+        sales: 1,
+        grossAmount: 37.99,
+        roas: 1.41,
+        margin: "28.9%",
+        ic: 2,
+        costIc: 12.26,
+        lance: "Menor custo",
+        salesPend: 2,
+        clicks: 22,
+        cpc: 1.11,
+        cpa: 24.52,
+        cpm: 79.61,
+        ctr: "7.14%",
+        arpu: 34.51,
+        pctIc: "9.09%",
+        impressions: 308,
+        visits: 16
+      }
+    ];
+
+    // DADOS DOS ANÚNCIOS DO PRINT 4
+    const subTabAnunciosData = [
+      {
+        id: "ad_1",
+        name: "ad06_37",
+        account: "AGENCIA2",
+        updated: "N/A",
+        spend: 15.86,
+        sales: 1,
+        grossAmount: 37.99,
+        roas: 2.18,
+        margin: "54.0%",
+        ic: 1,
+        costIc: 15.86,
+        salesPend: 0,
+        clicks: 14,
+        cpc: 1.13,
+        cpa: 15.86,
+        cpm: 81.75,
+        ctr: "7.22%",
+        arpu: 34.51,
+        pctIc: "7.14%",
+        impressions: 194,
+        visits: 10,
+        isPositive: true
+      },
+      {
+        id: "ad_2",
+        name: "ad01_37 — Cópia",
+        account: "AGENCIA2",
+        updated: "N/A",
+        spend: 6.06,
+        sales: 0,
+        grossAmount: 0.00,
+        roas: 0.00,
+        margin: "0.0%",
+        ic: 1,
+        costIc: 6.06,
+        salesPend: 2,
+        clicks: 5,
+        cpc: 1.21,
+        cpa: 0.00,
+        cpm: 81.89,
+        ctr: "6.76%",
+        arpu: 0.00,
+        pctIc: "20.00%",
+        impressions: 74,
+        visits: 4,
+        isPositive: false
+      },
+      {
+        id: "ad_3",
+        name: "ad08_37",
+        account: "AGENCIA2",
+        updated: "N/A",
+        spend: 2.15,
+        sales: 0,
+        grossAmount: 0.00,
+        roas: 0.00,
+        margin: "0.0%",
+        ic: 0,
+        costIc: 0.00,
+        salesPend: 0,
+        clicks: 3,
+        cpc: 0.72,
+        cpa: 0.00,
+        cpm: 89.58,
+        ctr: "12.50%",
+        arpu: 0.00,
+        pctIc: "0.00%",
+        impressions: 24,
+        visits: 2,
+        isPositive: false
+      },
+      {
+        id: "ad_4",
+        name: "ad07_37",
+        account: "AGENCIA2",
+        updated: "N/A",
+        spend: 0.30,
+        sales: 0,
+        grossAmount: 0.00,
+        roas: 0.00,
+        margin: "0.0%",
+        ic: 0,
+        costIc: 0.00,
+        salesPend: 0,
+        clicks: 0,
+        cpc: 0.00,
+        cpa: 0.00,
+        cpm: 30.00,
+        ctr: "0.00%",
+        arpu: 0.00,
+        pctIc: "-",
+        impressions: 10,
+        visits: 0,
+        isPositive: false
+      },
+      {
+        id: "ad_5",
+        name: "ad05_37",
+        account: "AGENCIA2",
+        updated: "N/A",
+        spend: 0.15,
+        sales: 0,
+        grossAmount: 0.00,
+        roas: 0.00,
+        margin: "0.0%",
+        ic: 0,
+        costIc: 0.00,
+        salesPend: 0,
+        clicks: 0,
+        cpc: 0.00,
+        cpa: 0.00,
+        cpm: 25.00,
+        ctr: "0.00%",
+        arpu: 0.00,
+        pctIc: "-",
+        impressions: 6,
+        visits: 0,
+        isPositive: false
+      }
+    ];
+
+    let currentCampaignSubTab = 'campanhas';
+
+    // GERADOR DE SOM DA MOEDINHA / CAIXA REGISTRADORA REALISTA
+    function playCashRegisterSound() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Moeda 1 (agudo brilhante)
+        const osc1 = audioCtx.createOscillator();
+        const gain1 = audioCtx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(987.77, audioCtx.currentTime); // B5
+        osc1.frequency.setValueAtTime(1318.51, audioCtx.currentTime + 0.08); // E6
+        gain1.gain.setValueAtTime(0.35, audioCtx.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.45);
+        osc1.connect(gain1);
+        gain1.connect(audioCtx.destination);
+        osc1.start();
+        osc1.stop(audioCtx.currentTime + 0.45);
+
+        // Moeda 2 (tilintar secundário)
+        const osc2 = audioCtx.createOscillator();
+        const gain2 = audioCtx.createGain();
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(1760, audioCtx.currentTime + 0.06); // A6
+        gain2.gain.setValueAtTime(0.2, audioCtx.currentTime + 0.06);
+        gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+        osc2.connect(gain2);
+        gain2.connect(audioCtx.destination);
+        osc2.start(audioCtx.currentTime + 0.06);
+        osc2.stop(audioCtx.currentTime + 0.5);
+
+        showToast('🔔 Venda Aprovada! R$ 34,51 (Som tocado)', 'success');
+      } catch(e) {
+        showToast('🔔 Venda Aprovada! R$ 34,51', 'success');
+      }
+    }
+
+    // MODAL DE TAXAS
+    function openTaxModal() {
+      document.getElementById('tax-input-meta').value = taxConfig.metaTaxPct;
+      document.getElementById('tax-input-empresa').value = taxConfig.empresaTaxPct;
+      document.getElementById('tax-input-plat-pct').value = taxConfig.platPct;
+      document.getElementById('tax-input-plat-fix').value = taxConfig.platFix;
+      document.getElementById('tax-config-modal').classList.remove('hidden');
+    }
+
+    function closeTaxModal() {
+      document.getElementById('tax-config-modal').classList.add('hidden');
+    }
+
+    function handleSaveTaxes(e) {
+      e.preventDefault();
+      taxConfig.metaTaxPct = parseFloat(document.getElementById('tax-input-meta').value) || 0;
+      taxConfig.empresaTaxPct = parseFloat(document.getElementById('tax-input-empresa').value) || 0;
+      taxConfig.platPct = parseFloat(document.getElementById('tax-input-plat-pct').value) || 0;
+      taxConfig.platFix = parseFloat(document.getElementById('tax-input-plat-fix').value) || 0;
+
+      recalculateDashboardFinancials();
+      closeTaxModal();
+      showToast('Taxas e Impostos recalculados com sucesso!', 'success');
+    }
+
+    // RECÁLCULO AUTOMÁTICO DE TAXAS E LUCRO REAL
+    function recalculateDashboardFinancials() {
+      const gross = 37.99; // Bruto total
+      const spend = 24.52; // Gasto Meta
+
+      // 1. Taxa da Plataforma (ex: 8.99% + 2.49)
+      const platTax = (gross * (taxConfig.platPct / 100)) + taxConfig.platFix;
+      const netRevenue = gross - platTax;
+
+      // 2. Imposto da Empresa
+      const empresaTax = gross * (taxConfig.empresaTaxPct / 100);
+
+      // 3. Imposto Meta Ads
+      const metaTax = spend * (taxConfig.metaTaxPct / 100);
+      const totalAdsCost = spend + metaTax;
+
+      // 4. Lucro Líquido Real = Faturamento Líquido - Imposto Empresa - Custo Total Ads
+      const realProfit = netRevenue - empresaTax - totalAdsCost;
+      const margin = (realProfit / netRevenue) * 100;
+
+      // Atualiza DOM
+      document.getElementById('dash-faturamento-liq').innerText = `R$ ${netRevenue.toFixed(2).replace('.', ',')}`;
+      document.getElementById('dash-faturamento-bruto').innerText = `R$ ${gross.toFixed(2).replace('.', ',')}`;
+      document.getElementById('dash-lucro-liq').innerText = `R$ ${realProfit.toFixed(2).replace('.', ',')}`;
+      document.getElementById('dash-margem').innerText = `${margin.toFixed(1)}%`;
+
+      document.getElementById('card-taxa-plataforma').innerText = `R$ ${platTax.toFixed(2).replace('.', ',')}`;
+      document.getElementById('card-imposto-empresa').innerText = `R$ ${empresaTax.toFixed(2).replace('.', ',')}`;
+      document.getElementById('label-taxa-empresa').innerText = `${taxConfig.empresaTaxPct}% sobre faturamento`;
+
+      document.getElementById('card-imposto-meta').innerText = `R$ ${metaTax.toFixed(2).replace('.', ',')}`;
+      document.getElementById('label-taxa-meta').innerText = `${taxConfig.metaTaxPct}% do gasto em ads`;
+
+      renderActiveSubTabTable();
+    }
+
+    // SUB-ABAS DE CAMPANHAS (CONTAS, CAMPANHAS, CONJUNTOS, ANÚNCIOS)
+    function switchCampaignSubTab(tab) {
+      currentCampaignSubTab = tab;
+      const tabs = ['contas', 'campanhas', 'conjuntos', 'anuncios'];
+      tabs.forEach(t => {
+        const btn = document.getElementById('subtab-btn-' + t);
+        const view = document.getElementById(`subtab-${t}-view`);
+        if (btn) {
+          if (t === tab) {
+            btn.className = "subtab-item text-blue-400 border-b-2 border-blue-500 pb-2 -mb-2.5 transition font-semibold";
+          } else {
+            btn.className = "subtab-item text-slate-400 hover:text-white pb-2 transition";
+          }
+        }
+        if (view) {
+          view.classList.toggle('hidden', t !== tab);
+        }
+      });
+      renderActiveSubTabTable();
+      lucide.createIcons();
+    }
+
+    function renderActiveSubTabTable() {
+      if (currentCampaignSubTab === 'campanhas') renderCampanhasSubTabTable();
+      if (currentCampaignSubTab === 'conjuntos') renderConjuntosSubTabTable();
+      if (currentCampaignSubTab === 'anuncios') renderAnunciosSubTabTable();
+    }
+
+    function renderCampanhasSubTabTable() {
+      const tbody = document.getElementById('campanhas-subtab-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      subTabCampanhasData.forEach(c => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-dark-850/60";
+        tr.innerHTML = `
+          <td class="py-3 px-3 text-center"><input type="checkbox" class="rounded bg-dark-700"></td>
+          <td class="py-3 px-3"><span class="w-8 h-4 bg-blue-600 rounded-full inline-block relative"><span class="w-3 h-3 bg-white rounded-full absolute right-0.5 top-0.5"></span></span></td>
+          <td class="py-3 px-4 font-bold text-white max-w-[200px] truncate">${c.name}<div class="text-[10px] text-slate-400">${c.account}</div></td>
+          <td class="py-3 px-3 text-slate-400">${c.updated}</td>
+          <td class="py-3 px-3"><span class="font-bold text-white">${c.budget}</span><div class="text-[10px] text-slate-400">${c.budgetType}</div></td>
+          <td class="py-3 px-3 font-semibold text-white private-blur">R$ ${c.spend.toFixed(2).replace('.', ',')}</td>
+          <td class="py-3 px-3 font-bold text-blue-400 private-blur">R$ 9,99</td>
+          <td class="py-3 px-3 font-bold text-white private-blur">R$ ${c.arpu.toFixed(2).replace('.', ',')}</td>
+          <td class="py-3 px-3 font-bold text-white">${c.sales}</td>
+          <td class="py-3 px-3 font-bold text-blue-400">${c.roas}</td>
+          <td class="py-3 px-3 font-bold text-blue-400">${c.margin}</td>
+          <td class="py-3 px-3 text-white">${c.ic}</td>
+          <td class="py-3 px-3 text-slate-300">R$ ${c.costIc.toFixed(2).replace('.', ',')}</td>
+          <td class="py-3 px-3 font-bold text-amber-400">${c.salesPend}</td>
+          <td class="py-3 px-3 text-white">${c.clicks}</td>
+          <td class="py-3 px-3 text-slate-300">R$ ${c.cpc.toFixed(2).replace('.', ',')}</td>
+          <td class="py-3 px-3 text-blue-400 font-bold">R$ ${c.cpa.toFixed(2).replace('.', ',')}</td>
+          <td class="py-3 px-3 text-slate-300">R$ ${c.cpm.toFixed(2).replace('.', ',')}</td>
+          <td class="py-3 px-3 text-white">${c.ctr}</td>
+          <td class="py-3 px-3 text-white">R$ ${c.arpu.toFixed(2).replace('.', ',')}</td>
+          <td class="py-3 px-3 text-slate-300">${c.pctIc}</td>
+          <td class="py-3 px-3 text-slate-300">${c.impressions}</td>
+          <td class="py-3 px-3 text-slate-300">${c.visits}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderConjuntosSubTabTable() {
+      const tbody = document.getElementById('conjuntos-subtab-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      subTabConjuntosData.forEach(c => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-dark-850/60";
+        tr.innerHTML = `
+          <td class="py-3 px-3 text-center"><input type="checkbox" class="rounded bg-dark-700"></td>
+          <td class="py-3 px-3"><span class="w-8 h-4 bg-blue-600 rounded-full inline-block relative"><span class="w-3 h-3 bg-white rounded-full absolute right-0.5 top-0.5"></span></span></td>
+          <td class="py-3 px-4 font-bold text-white">${c.name}<div class="text-[10px] text-slate-400">${c.account}</div></td>
+          <td class="py-3 px-3 text-slate-400">${c.updated}</td>
+          <td class="py-3 px-3 text-slate-300">${c.budget}</td>
+          <td class="py-3 px-3 font-semibold text-white private-blur">R$ ${c.spend.toFixed(2).replace('.', ',')}</td>
+          <td class="py-3 px-3 font-bold text-blue-400 private-blur">R$ 9,99</td>
+          <td class="py-3 px-3 font-bold text-white private-blur">R$ 34,51</td>
+          <td class="py-3 px-3 font-bold text-white">${c.sales}</td>
+          <td class="py-3 px-3 font-bold text-blue-400">${c.roas}</td>
+          <td class="py-3 px-3 font-bold text-blue-400">${c.margin}</td>
+          <td class="py-3 px-3 text-white">${c.ic}</td>
+          <td class="py-3 px-3 text-slate-300">R$ ${c.costIc.toFixed(2).replace('.', ',')}</td>
+          <td class="py-3 px-3 text-slate-300">${c.lance}</td>
+          <td class="py-3 px-3 font-bold text-amber-400">${c.salesPend}</td>
+          <td class="py-3 px-3 text-white">${c.clicks}</td>
+          <td class="py-3 px-3 text-slate-300">R$ ${c.cpc.toFixed(2).replace('.', ',')}</td>
+          <td class="py-3 px-3 text-blue-400 font-bold">R$ ${c.cpa.toFixed(2).replace('.', ',')}</td>
+          <td class="py-3 px-3 text-slate-300">R$ ${c.cpm.toFixed(2).replace('.', ',')}</td>
+          <td class="py-3 px-3 text-white">${c.ctr}</td>
+          <td class="py-3 px-3 text-white">R$ 34,51</td>
+          <td class="py-3 px-3 text-slate-300">${c.pctIc}</td>
+          <td class="py-3 px-3 text-slate-300">${c.impressions}</td>
+          <td class="py-3 px-3 text-slate-300">${c.visits}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderAnunciosSubTabTable() {
+      const tbody = document.getElementById('anuncios-subtab-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      subTabAnunciosData.forEach(a => {
+        const profit = a.isPositive ? 18.65 : -a.spend;
+        const profitColor = a.isPositive ? 'text-blue-400' : 'text-rose-500';
+        const revenue = a.isPositive ? 34.51 : 0.00;
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-dark-850/60 transition";
+        tr.innerHTML = `
+          <td class="py-3 px-3 text-center"><input type="checkbox" class="rounded bg-dark-700"></td>
+          <td class="py-3 px-3"><span class="w-8 h-4 bg-blue-600 rounded-full inline-block relative"><span class="w-3 h-3 bg-white rounded-full absolute right-0.5 top-0.5"></span></span></td>
+          <td class="py-3 px-4 font-bold text-white">${a.name}<div class="text-[10px] text-slate-400">${a.account}</div></td>
+          <td class="py-3 px-3 text-slate-400">${a.updated}</td>
+          <td class="py-3 px-3 text-center">
+            <button onclick="openCreativePreviewModal('${a.id}')" class="w-7 h-7 rounded-lg bg-dark-800 hover:bg-dark-750 border border-dark-700 text-slate-300 hover:text-white flex items-center justify-center mx-auto transition" title="Ver Prévia do Criativo">
+              <i data-lucide="eye" class="w-3.5 h-3.5 text-blue-400"></i>
+            </button>
+          </td>
+          <td class="py-3 px-3 font-semibold text-white private-blur">R$ ${a.spend.toFixed(2).replace('.', ',')}</td>
+          <td class="py-3 px-3 font-bold ${profitColor} private-blur">R$ ${profit >= 0 ? profit.toFixed(2).replace('.', ',') : '-' + Math.abs(profit).toFixed(2).replace('.', ',')}</td>
+          <td class="py-3 px-3 font-bold text-white private-blur">R$ ${revenue.toFixed(2).replace('.', ',')}</td>
+          <td class="py-3 px-3 font-bold text-white">${a.sales}</td>
+          <td class="py-3 px-3 font-bold ${a.isPositive ? 'text-blue-400' : 'text-slate-500'}">${a.roas.toFixed(2)}</td>
+          <td class="py-3 px-3 font-bold ${a.isPositive ? 'text-blue-400' : 'text-slate-500'}">${a.margin}</td>
+          <td class="py-3 px-3 text-white">${a.ic}</td>
+          <td class="py-3 px-3 text-slate-300">R$ ${a.costIc.toFixed(2).replace('.', ',')}</td>
+          <td class="py-3 px-3 font-bold text-amber-400">${a.salesPend}</td>
+          <td class="py-3 px-3 text-white">${a.clicks}</td>
+          <td class="py-3 px-3 text-slate-300">R$ ${a.cpc.toFixed(2).replace('.', ',')}</td>
+          <td class="py-3 px-3 text-blue-400 font-bold">R$ ${a.cpa.toFixed(2).replace('.', ',')}</td>
+          <td class="py-3 px-3 text-slate-300">R$ ${a.cpm.toFixed(2).replace('.', ',')}</td>
+          <td class="py-3 px-3 text-white">${a.ctr}</td>
+          <td class="py-3 px-3 text-white">R$ ${a.arpu.toFixed(2).replace('.', ',')}</td>
+          <td class="py-3 px-3 text-slate-300">${a.pctIc}</td>
+          <td class="py-3 px-3 text-slate-300">${a.impressions}</td>
+          <td class="py-3 px-3 text-slate-300">${a.visits}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      lucide.createIcons();
+    }
+
+    function openCreativePreviewModal(adId) {
+      const ad = subTabAnunciosData.find(a => a.id === adId);
+      if (!ad) return;
+
+      document.getElementById('modal-ad-title').innerText = ad.name;
+      document.getElementById('modal-ad-headline').innerText = `Criativo ${ad.name} (Meta Ads)`;
+      document.getElementById('modal-ad-roas-badge').innerText = `ROAS: ${ad.roas.toFixed(2)} • ${ad.sales} Venda`;
+      document.getElementById('modal-ad-spend').innerText = `R$ ${ad.spend.toFixed(2).replace('.', ',')}`;
+      document.getElementById('modal-ad-profit').innerText = `R$ ${ad.isPositive ? '18,65' : '-' + ad.spend.toFixed(2).replace('.', ',')}`;
+      document.getElementById('modal-ad-margin').innerText = ad.margin;
+      document.getElementById('modal-ad-utm-link').innerText = `https://seusite.com.br/?utm_source=facebook&utm_campaign=CO3_Magnes&utm_content=${ad.name}`;
+
+      document.getElementById('creative-preview-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeCreativeModal() {
+      document.getElementById('creative-preview-modal').classList.add('hidden');
+    }
+
+    // NAVEGAÇÃO ENTRE ABAS PRINCIPAIS
+    function switchTab(tabId) {
+      const tabs = ['painel', 'resumo', 'aovivo', 'campanhas', 'vendas', 'visitas', 'regras', 'integracoes', 'notificacoes', 'simulador', 'instalacao'];
+      tabs.forEach(t => {
+        const el = document.getElementById('tab-' + t);
+        const btn = document.getElementById('nav-btn-' + t);
+        if (el) el.classList.add('hidden');
+        if (btn) {
+          btn.className = "nav-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-dark-850 font-medium transition";
+        }
+      });
+
+      const activeEl = document.getElementById('tab-' + tabId);
+      const activeBtn = document.getElementById('nav-btn-' + tabId);
+      if (activeEl) activeEl.classList.remove('hidden');
+      if (activeBtn) {
+        activeBtn.className = "nav-item active w-full flex items-center justify-between px-3 py-2 rounded-xl text-white bg-dark-800 font-semibold transition";
+      }
+
+      if (tabId === 'campanhas') {
+        renderActiveSubTabTable();
+      }
+
+      if (window.innerWidth < 768) {
+        toggleMobileSidebar(false);
+      }
+      lucide.createIcons();
+    }
+
+    function toggleSidebarSubmenu(id) {
+      const el = document.getElementById(id);
+      const arrow = document.getElementById('arrow-dashboards');
+      if (el) {
+        el.classList.toggle('hidden');
+        if (arrow) arrow.classList.toggle('rotate-180');
+      }
+    }
+
+    function toggleMobileSidebar(forceState) {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+      const shouldOpen = forceState !== undefined ? forceState : sidebar.classList.contains('-translate-x-full');
+
+      if (shouldOpen) {
+        sidebar.classList.remove('-translate-x-full');
+        overlay.classList.remove('hidden');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+      }
+    }
+
+    function togglePrivateMode() {
+      document.body.classList.toggle('private-mode');
+      const isPrivate = document.body.classList.contains('private-mode');
+      const icon = document.getElementById('private-icon');
+      if (isPrivate) {
+        icon.setAttribute('data-lucide', 'eye-off');
+        showToast('Modo privado ativado (Valores ocultados)', 'info');
+      } else {
+        icon.setAttribute('data-lucide', 'eye');
+        showToast('Modo privado desativado', 'info');
+      }
+      lucide.createIcons();
+    }
+
+    function showToast(msg, type = 'info') {
+      const c = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `px-4 py-2.5 rounded-xl shadow-xl text-xs font-semibold flex items-center gap-2 border transition-all duration-300 pointer-events-auto ${
+        type === 'success' 
+          ? 'bg-emerald-950/90 text-emerald-300 border-emerald-500/40' 
+          : 'bg-dark-850 text-slate-200 border-dark-750'
+      }`;
+      toast.innerHTML = `
+        <span class="w-2 h-2 rounded-full ${type === 'success' ? 'bg-emerald-400' : 'bg-blue-400'}"></span>
+        <span>${msg}</span>
+      `;
+      c.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    function handleSimulatorSubmit(e) {
+      e.preventDefault();
+      playCashRegisterSound();
+      showToast('Venda registrada com sucesso!', 'success');
+      recalculateDashboardFinancials();
+    }
+
+    function refreshDashboard() {
+      showToast('Sincronizando dados com a nuvem...', 'info');
+      setTimeout(() => {
+        recalculateDashboardFinancials();
+        showToast('Métricas atualizadas com sucesso!', 'success');
+      }, 500);
+    }
+
+    function exportTableToCSV() {
+      showToast('Exportando relatório CSV das campanhas...', 'info');
+    }
+
+    function filterSubTabBySearch() {
+      // Input search logic
+    }
+
+    // GLOBO 3D EM CANVAS PURO
+    function initGlobe3D(canvasId) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let width = canvas.width;
+      let height = canvas.height;
+      let rotation = 0;
+
+      function draw() {
+        ctx.clearRect(0, 0, width, height);
+        const cx = width / 2;
+        const cy = height / 2;
+        const radius = width * 0.38;
+
+        const grad = ctx.createRadialGradient(cx - radius * 0.3, cy - radius * 0.3, radius * 0.1, cx, cy, radius);
+        grad.addColorStop(0, '#10231c');
+        grad.addColorStop(0.7, '#0b1613');
+        grad.addColorStop(1, '#070b09');
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = '#10b98144';
+        ctx.stroke();
+
+        rotation += 0.35;
+        requestAnimationFrame(draw);
+      }
+      draw();
+    }
+
+    // INICIALIZAÇÃO
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      recalculateDashboardFinancials();
+      switchCampaignSubTab('campanhas');
+      initGlobe3D('globe-canvas');
+      initGlobe3D('globe-canvas-large');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+utm_source=FB&utm_campaign={{campaign.name}}|{{campaign.id}}&utm_medium={{adset.name}}|{{adset.id}}&utm_content={{ad.name}}|{{ad.id}}&utm_term={{placement}}&src={{campaign.name}}|{{campaign.id}}|{{adset.name}}|{{adset.id}}|{{ad.name}}|{{ad.id}}|{{placement}}

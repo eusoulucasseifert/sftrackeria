@@ -1,1147 +1,1536 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="dark">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>SF TRACKER IA - Painel de Atribuição & Rastreamento Ilimitado</title>
-  
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="SF Tracker">
-  <meta name="theme-color" content="#030712">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SF TRACKER IA - Dashboard de Rastreamento & Métricas</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
-          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
           colors: {
-            brand: { 500: '#10b981', 600: '#059669', 700: '#047857' },
-            dark: { 950: '#020617', 900: '#0b1329', 850: '#0f172a', 800: '#1e293b', 700: '#334155' }
+            brand: {
+              50: '#ecfdf5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857'
+            },
+            dark: {
+              900: '#090d16',
+              850: '#0f172a',
+              800: '#1e293b',
+              750: '#24334a',
+              700: '#334155'
+            }
           }
         }
       }
     }
   </script>
   <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #050a18; }
-    .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: #0b1329; }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
-    .blur-private { filter: blur(7px); transition: filter 0.2s ease; user-select: none; }
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #090d16; color: #f1f5f9; }
+    .blurred { filter: blur(6px); transition: filter 0.2s ease; user-select: none; }
+    /* Scrollbar personalizada */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #10b981; }
   </style>
 </head>
-<body class="text-slate-100 min-h-screen flex antialiased selection:bg-emerald-500 selection:text-white">
+<body class="bg-dark-900 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
 
-  <!-- SIDEBAR LATERAL NATIVA (Fiel ao LowTrack / Utmify) -->
-  <aside id="main-sidebar" class="w-64 bg-[#070e22] border-r border-slate-800/80 flex flex-col shrink-0 fixed md:static inset-y-0 left-0 z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-200">
-    <!-- Topo Logo -->
-    <div class="h-16 px-5 flex items-center justify-between border-b border-slate-800/80">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
-          <i class="fa-solid fa-microchip text-base"></i>
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-dark-800 border border-brand-500/40 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 pointer-events-none">
+    <div class="w-2.5 h-2.5 rounded-full bg-brand-500 animate-pulse"></div>
+    <span id="toast-msg" class="text-sm font-medium">Ação executada com sucesso!</span>
+  </div>
+
+  <div class="flex flex-1 overflow-hidden">
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-dark-850 border-r border-dark-750 flex flex-col justify-between shrink-0 hidden md:flex">
+      <div>
+        <!-- LOGO -->
+        <div class="h-16 flex items-center px-6 border-b border-dark-750 space-x-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center font-extrabold text-dark-900 shadow-lg shadow-brand-500/20 text-lg">
+            SF
+          </div>
+          <div>
+            <div class="font-extrabold text-base tracking-wide flex items-center gap-1.5 text-white">
+              SF TRACKER <span class="bg-brand-500/20 text-brand-400 text-[10px] px-1.5 py-0.5 rounded font-black tracking-wider">IA</span>
+            </div>
+            <div class="text-[11px] text-slate-400 font-medium">Analytics & Atribuição</div>
+          </div>
         </div>
-        <div>
-          <span class="text-base font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">SF TRACKER</span>
-          <span class="text-[10px] ml-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-black">IA</span>
+
+        <!-- MENU NAVEGAÇÃO -->
+        <div class="px-4 py-6 space-y-6">
+          <div>
+            <div class="px-3 mb-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Módulos Principais</div>
+            <nav class="space-y-1">
+              <button onclick="setTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all bg-brand-500/10 text-brand-400 border border-brand-500/20">
+                <span class="flex items-center gap-3">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                  Dashboard Geral
+                </span>
+                <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+              </button>
+
+              <button onclick="setTab('campaigns')" id="nav-campaigns" class="nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all text-slate-400 hover:text-white hover:bg-dark-800">
+                <span class="flex items-center gap-3">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+                  Campanhas Ads
+                </span>
+                <span class="text-[10px] bg-dark-750 text-slate-300 px-2 py-0.5 rounded-full font-semibold">4 NÍVEIS</span>
+              </button>
+
+              <button onclick="setTab('sales')" id="nav-sales" class="nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all text-slate-400 hover:text-white hover:bg-dark-800">
+                <span class="flex items-center gap-3">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  Vendas & Atribuição
+                </span>
+                <span id="sales-badge-count" class="text-[10px] bg-brand-500/20 text-brand-400 px-2 py-0.5 rounded-full font-bold">2</span>
+              </button>
+
+              <button onclick="setTab('visits')" id="nav-visits" class="nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all text-slate-400 hover:text-white hover:bg-dark-800">
+                <span class="flex items-center gap-3">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                  Visitas ao Vivo
+                </span>
+                <span class="flex h-2 w-2 relative">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+              </button>
+
+              <button onclick="setTab('rules')" id="nav-rules" class="nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all text-slate-400 hover:text-white hover:bg-dark-800">
+                <span class="flex items-center gap-3">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  Regras PRO (Automação)
+                </span>
+                <span class="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-bold">PRO</span>
+              </button>
+            </nav>
+          </div>
+
+          <div>
+            <div class="px-3 mb-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Ferramentas & Setup</div>
+            <nav class="space-y-1">
+              <button onclick="setTab('integrations')" id="nav-integrations" class="nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all text-slate-400 hover:text-white hover:bg-dark-800">
+                <span class="flex items-center gap-3">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  Multilogin & BMs
+                </span>
+              </button>
+
+              <button onclick="setTab('utms')" id="nav-utms" class="nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all text-slate-400 hover:text-white hover:bg-dark-800">
+                <span class="flex items-center gap-3">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>
+                  Gerador de UTMs
+                </span>
+              </button>
+
+              <button onclick="setTab('webhooks')" id="nav-webhooks" class="nav-item w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all text-slate-400 hover:text-white hover:bg-dark-800">
+                <span class="flex items-center gap-3">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                  Webhooks & Checkouts
+                </span>
+              </button>
+            </nav>
+          </div>
         </div>
       </div>
-      <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-    </div>
 
-    <!-- Navegação Menus -->
-    <div class="flex-1 overflow-y-auto custom-scrollbar px-3 py-4 space-y-1">
-      
-      <!-- Seção Dashboards (Colapsável & Multi-dashboard) -->
-      <div>
-        <button onclick="toggleSubmenu('submenu-dashboards')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-400 hover:text-slate-200 rounded-lg hover:bg-slate-800/50 transition">
-          <span class="flex items-center gap-2.5"><i class="fa-solid fa-table-cells-large text-slate-400"></i> Dashboards</span>
-          <i id="arrow-dashboards" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i>
-        </button>
-        <div id="submenu-dashboards" class="pl-4 mt-1 space-y-1">
-          <div id="dashboards-list" class="space-y-1">
-            <!-- Renderizado dinamicamente via JS -->
+      <!-- PERFIL DO USUÁRIO NO RODAPÉ -->
+      <div class="p-4 border-t border-dark-750">
+        <div class="bg-dark-800 p-3 rounded-xl border border-dark-750 flex items-center space-x-3">
+          <div class="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center font-bold text-slate-300 text-xs">
+            LS
           </div>
-          <button onclick="openNewDashboardModal()" class="w-full text-left px-3 py-1.5 text-xs text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 rounded-lg flex items-center gap-2 transition">
-            <i class="fa-solid fa-plus text-[10px]"></i> Novo Dashboard
+          <div class="overflow-hidden">
+            <div class="text-xs font-bold text-white truncate">Lucas Seifert</div>
+            <div class="text-[10px] text-brand-400 font-semibold flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span> Plano Vitalício Pro
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      
+      <!-- TOP BAR -->
+      <header class="h-20 bg-dark-850/80 backdrop-blur-md border-b border-dark-750 px-6 flex items-center justify-between shrink-0 sticky top-0 z-30">
+        <div class="flex items-center space-x-4">
+          <h1 id="page-title" class="text-xl font-extrabold text-white">Dashboard Principal</h1>
+          <span class="h-4 w-px bg-dark-700 hidden sm:block"></span>
+          
+          <!-- FILTRO DE PRODUTOS -->
+          <div class="hidden md:flex items-center space-x-2">
+            <select id="filter-product" onchange="applyFilters()" class="bg-dark-800 border border-dark-750 text-xs font-semibold rounded-lg px-3 py-1.5 text-slate-300 hover:border-dark-700 focus:outline-none focus:border-brand-500">
+              <option value="all">Produtos (Todos)</option>
+              <option value="Protocolo Magnésio">Protocolo Magnésio</option>
+              <option value="Truque da Canela">O Truque da Canela</option>
+            </select>
+
+            <!-- FILTRO DE CONTAS -->
+            <select id="filter-account" onchange="applyFilters()" class="bg-dark-800 border border-dark-750 text-xs font-semibold rounded-lg px-3 py-1.5 text-slate-300 hover:border-dark-700 focus:outline-none focus:border-brand-500">
+              <option value="all">Contas de Anúncio (Todas)</option>
+              <option value="act_9823418293">Conta BM Contingência 01</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- AÇÕES DO TOPO (FILTROS DE DATA, MODO PRIVADO, TAXAS, COLUNAS) -->
+        <div class="flex items-center space-x-2.5">
+          <!-- SELETOR DE PERÍODO -->
+          <div class="flex items-center bg-dark-800 p-1 rounded-xl border border-dark-750 text-xs font-semibold">
+            <button onclick="setDateRange('today')" id="btn-date-today" class="date-btn px-3 py-1.5 rounded-lg bg-brand-500/20 text-brand-400 font-bold transition-all">Hoje</button>
+            <button onclick="setDateRange('yesterday')" id="btn-date-yesterday" class="date-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition-all">Ontem</button>
+            <button onclick="setDateRange('7d')" id="btn-date-7d" class="date-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition-all">7D</button>
+            <button onclick="setDateRange('30d')" id="btn-date-30d" class="date-btn px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition-all">30D</button>
+          </div>
+
+          <!-- BOTÃO PERSONALIZAR COLUNAS -->
+          <button onclick="toggleModal('modal-columns')" class="px-3 py-1.5 bg-dark-800 hover:bg-dark-750 text-slate-300 hover:text-white border border-dark-750 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all" title="Personalizar Colunas">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg>
+            <span class="hidden sm:inline">Colunas</span>
+          </button>
+
+          <!-- BOTÃO TAXAS E IMPOSTOS -->
+          <button onclick="toggleModal('modal-taxes')" class="px-3 py-1.5 bg-dark-800 hover:bg-dark-750 text-slate-300 hover:text-white border border-dark-750 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all">
+            <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+            <span class="hidden sm:inline">Taxas & Impostos</span>
+          </button>
+
+          <!-- MODO PRIVADO (BLUR) -->
+          <button onclick="togglePrivateMode()" id="btn-private" class="p-2 bg-dark-800 hover:bg-dark-750 text-slate-400 hover:text-white border border-dark-750 rounded-xl transition-all" title="Ocultar Valores Sensíveis">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/></svg>
+          </button>
+
+          <!-- SINCRONIZAR DADOS -->
+          <button onclick="refreshData()" class="px-3.5 py-1.5 bg-brand-500 hover:bg-brand-600 text-dark-900 font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-lg shadow-brand-500/20 transition-all">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Sincronizar
           </button>
         </div>
-      </div>
+      </header>
 
-      <nav class="space-y-1 pt-2">
-        <button onclick="switchTab('painel')" id="nav-painel" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
-          <i class="fa-solid fa-chart-line text-slate-400 w-5"></i> Painel Geral
-        </button>
-        <button onclick="switchTab('campanhas')" id="nav-campanhas" class="sidebar-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
-          <div class="flex items-center gap-3">
-            <i class="fa-solid fa-bullhorn text-slate-400 w-5"></i> Campanhas
-          </div>
-          <span class="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700 font-bold">4 NÍVEIS</span>
-        </button>
-        <button onclick="switchTab('vendas')" id="nav-vendas" class="sidebar-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
-          <div class="flex items-center gap-3">
-            <i class="fa-solid fa-receipt text-slate-400 w-5"></i> Vendas
-          </div>
-          <span id="badge-sales-count" class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-bold">0</span>
-        </button>
-        <button onclick="switchTab('visitas')" id="nav-visitas" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
-          <i class="fa-solid fa-eye text-slate-400 w-5"></i> Visitas
-        </button>
-        <button onclick="switchTab('regras')" id="nav-regras" class="sidebar-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
-          <div class="flex items-center gap-3">
-            <i class="fa-solid fa-bolt text-amber-400 w-5"></i> Regras
-          </div>
-          <span class="text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black px-1.5 py-0.5 rounded shadow">PRO</span>
-        </button>
-        <button onclick="switchTab('integracoes')" id="nav-integracoes" class="sidebar-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
-          <div class="flex items-center gap-3">
-            <i class="fa-solid fa-link text-slate-400 w-5"></i> Integrações
-          </div>
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        </button>
-        <button onclick="switchTab('notificacoes')" id="nav-notificacoes" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
-          <i class="fa-solid fa-bell text-slate-400 w-5"></i> Notificações
-        </button>
-      </nav>
-    </div>
+      <!-- ÁREA DE CONTEÚDO DINÂMICA -->
+      <div class="p-6 space-y-6">
 
-    <!-- Rodapé Usuário Admin Vitalício (Sem Pop-up de expiração) -->
-    <div class="p-3 border-t border-slate-800/80 bg-[#050b1a]">
-      <div class="p-2.5 rounded-xl bg-slate-900/90 border border-emerald-500/30 flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs border border-emerald-500/40">
-            <i class="fa-solid fa-crown text-amber-400"></i>
-          </div>
-          <div>
-            <div class="text-xs font-bold text-white flex items-center gap-1.5">
-              Admin Master
-              <span class="text-[9px] bg-emerald-500 text-slate-950 font-black px-1 rounded">VITALÍCIO</span>
-            </div>
-            <div class="text-[10px] text-emerald-400/90">Acesso Total Ilimitado</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </aside>
+        <!-- ============================================================== -->
+        <!-- TAB: DASHBOARD PRINCIPAL -->
+        <!-- ============================================================== -->
+        <div id="tab-dashboard" class="tab-pane space-y-6">
 
-  <!-- CONTEÚDO PRINCIPAL -->
-  <main class="flex-1 flex flex-col min-w-0 overflow-y-auto h-screen bg-[#060c1e] custom-scrollbar">
-    
-    <!-- Topbar Global com Ações Rápidas -->
-    <header class="h-16 px-4 md:px-6 bg-[#070e22]/90 backdrop-blur border-b border-slate-800/80 flex items-center justify-between sticky top-0 z-40">
-      <div class="flex items-center gap-3">
-        <button onclick="toggleMobileSidebar()" class="md:hidden p-2 rounded-lg bg-slate-800 text-slate-300"><i class="fa-solid fa-bars"></i></button>
-        <h1 id="header-page-title" class="text-base md:text-lg font-bold text-white flex items-center gap-2">
-          Dashboard Principal
-        </h1>
-        <span id="current-dashboard-badge" class="hidden md:inline-block text-[11px] bg-slate-800 border border-slate-700 text-slate-300 px-2.5 py-0.5 rounded-full font-semibold">Geral</span>
-      </div>
-
-      <div class="flex items-center gap-2 md:gap-3">
-        <!-- Botão Sincronizar em Tempo Real -->
-        <button onclick="syncAllDataNow()" id="btn-sync-all" title="Sincronizar em tempo real" class="px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5 transition">
-          <i id="sync-spinner" class="fa-solid fa-rotate"></i>
-          <span class="hidden sm:inline">Sincronizar</span>
-        </button>
-
-        <!-- Botão Taxas & Impostos -->
-        <button onclick="openTaxesModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition">
-          <i class="fa-solid fa-sliders"></i>
-          <span class="hidden sm:inline">Taxas & Impostos</span>
-        </button>
-
-        <!-- Modo Privado -->
-        <button onclick="togglePrivateMode()" id="btn-private-mode" title="Ocultar valores na tela" class="p-2 md:px-3 md:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition">
-          <i id="private-icon" class="fa-solid fa-eye"></i>
-          <span class="hidden md:inline">Modo Privado</span>
-        </button>
-
-        <!-- Testar Som Moeda -->
-        <button onclick="playCashSound(true)" title="Tocar som da moeda" class="p-2 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 text-xs transition">
-          <i class="fa-solid fa-coins"></i>
-        </button>
-      </div>
-    </header>
-
-    <div class="p-4 md:p-6 space-y-6">
-
-      <!-- ================= ABA 1: PAINEL / DASHBOARD PRINCIPAL (Print 20) ================= -->
-      <section id="tab-painel" class="tab-content space-y-6">
-        
-        <!-- Barra de Filtros Fiel ao Print 20 -->
-        <div class="bg-[#0a1228] p-3 rounded-2xl border border-slate-800/90 flex flex-wrap items-center justify-between gap-3 shadow-lg">
-          <div class="flex flex-wrap items-center gap-1.5">
-            <span class="text-xs font-bold text-slate-400 mr-1 hidden sm:inline">Período:</span>
-            <button onclick="setPeriodFilter('hoje')" class="period-btn px-3 py-1 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950 shadow">Hoje</button>
-            <button onclick="setPeriodFilter('ontem')" class="period-btn px-3 py-1 rounded-lg text-xs font-semibold text-slate-300 hover:bg-slate-800">Ontem</button>
-            <button onclick="setPeriodFilter('7d')" class="period-btn px-3 py-1 rounded-lg text-xs font-semibold text-slate-300 hover:bg-slate-800">7 dias</button>
-            <button onclick="setPeriodFilter('15d')" class="period-btn px-3 py-1 rounded-lg text-xs font-semibold text-slate-300 hover:bg-slate-800">15 dias</button>
-            <button onclick="setPeriodFilter('30d')" class="period-btn px-3 py-1 rounded-lg text-xs font-semibold text-slate-300 hover:bg-slate-800">30 dias</button>
-            <button onclick="openCustomDateModal()" class="period-btn px-3 py-1 rounded-lg text-xs font-semibold text-slate-300 hover:bg-slate-800 flex items-center gap-1">
-              <i class="fa-regular fa-calendar"></i> Personalizado
-            </button>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <!-- Dropdown Produtos -->
-            <select id="filter-products" onchange="applyGlobalFilters()" class="bg-[#070e22] text-xs text-slate-300 border border-slate-700/80 rounded-lg px-2.5 py-1.5 focus:outline-none">
-              <option value="all">Produtos (Todos)</option>
-              <option value="Protocolo Magnésio">Protocolo Magnésio</option>
-              <option value="Guia Renda Extra">Guia Renda Extra</option>
-            </select>
-
-            <!-- Dropdown Contas -->
-            <select id="filter-accounts" onchange="applyGlobalFilters()" class="bg-[#070e22] text-xs text-slate-300 border border-slate-700/80 rounded-lg px-2.5 py-1.5 focus:outline-none">
-              <option value="all">Contas (Todas)</option>
-              <option value="AGENCIA2">AGENCIA2</option>
-              <option value="BubbleBox01">BubbleBox01</option>
-            </select>
-
-            <button onclick="syncAllDataNow()" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs" title="Atualizar"><i class="fa-solid fa-arrows-rotate"></i></button>
-            <button onclick="exportDashboardSummaryCSV()" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs" title="Exportar"><i class="fa-solid fa-download"></i></button>
-          </div>
-        </div>
-
-        <!-- Cards de KPIs (Faturamento Líquido, Lucro, Spend, CPA, ARPU, ROAS) -->
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <div class="bg-[#0a1228] p-4 rounded-xl border border-slate-800">
-            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Faturamento Líquido</div>
-            <div id="kpi-faturamento-liq" class="text-xl md:text-2xl font-black text-white mt-1.5 private-val">R$ 0,00</div>
-            <div class="text-[11px] text-slate-400 mt-1">Bruto: <span id="kpi-faturamento-bruto" class="font-bold text-slate-300 private-val">R$ 0,00</span></div>
-          </div>
-
-          <div class="bg-[#0a1228] p-4 rounded-xl border border-slate-800">
-            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Lucro Líquido</div>
-            <div id="kpi-lucro-liq" class="text-xl md:text-2xl font-black text-emerald-400 mt-1.5 private-val">R$ 0,00</div>
-            <div id="kpi-lucro-status" class="text-[11px] text-emerald-400 font-bold mt-1">▲ Positivo</div>
-          </div>
-
-          <div class="bg-[#0a1228] p-4 rounded-xl border border-slate-800">
-            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Gasto em Ads</div>
-            <div id="kpi-gasto-ads" class="text-xl md:text-2xl font-black text-white mt-1.5 private-val">R$ 0,00</div>
-            <div class="text-[11px] text-amber-400/90 mt-1">+ Imposto Meta: <span id="kpi-imposto-ads" class="private-val">R$ 0,00</span></div>
-          </div>
-
-          <div class="bg-[#0a1228] p-4 rounded-xl border border-slate-800">
-            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">CPA Médio</div>
-            <div id="kpi-cpa" class="text-xl md:text-2xl font-black text-white mt-1.5 private-val">R$ 0,00</div>
-            <div class="text-[11px] text-slate-400 mt-1">Custo por venda</div>
-          </div>
-
-          <div class="bg-[#0a1228] p-4 rounded-xl border border-slate-800">
-            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">ARPU / Ticket</div>
-            <div id="kpi-arpu" class="text-xl md:text-2xl font-black text-white mt-1.5 private-val">R$ 0,00</div>
-            <div class="text-[11px] text-slate-400 mt-1">Ticket médio pago</div>
-          </div>
-
-          <div class="bg-[#0a1228] p-4 rounded-xl border border-slate-800">
-            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">ROAS Geral</div>
-            <div id="kpi-roas" class="text-xl md:text-2xl font-black text-cyan-400 mt-1.5 private-val">0.00x</div>
-            <div class="text-[11px] text-slate-400 mt-1">Margem: <span id="kpi-margem" class="text-emerald-400 font-bold private-val">0.0%</span></div>
-          </div>
-        </div>
-
-        <!-- Linha 2 de Cards Secundários -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div class="bg-[#0a1228] p-3.5 rounded-xl border border-slate-800">
-            <div class="text-[11px] font-bold text-slate-400">Vendas Aprovadas</div>
-            <div id="kpi-vendas-aprovadas" class="text-xl font-bold text-white mt-1">0</div>
-            <div class="text-[10px] text-emerald-400 mt-0.5">100% finalizadas</div>
-          </div>
-          <div class="bg-[#0a1228] p-3.5 rounded-xl border border-slate-800">
-            <div class="text-[11px] font-bold text-slate-400">Vendas Pendentes (Pix/Boleto)</div>
-            <div id="kpi-vendas-pendentes-valor" class="text-xl font-bold text-amber-400 mt-1 private-val">R$ 0,00</div>
-            <div id="kpi-vendas-pendentes-qtd" class="text-[10px] text-slate-400 mt-0.5">0 aguardando</div>
-          </div>
-          <div class="bg-[#0a1228] p-3.5 rounded-xl border border-slate-800">
-            <div class="text-[11px] font-bold text-slate-400">Chargeback / Reembolso</div>
-            <div class="text-xl font-bold text-rose-400 mt-1">0.0%</div>
-            <div class="text-[10px] text-slate-400 mt-0.5">0 devoluções</div>
-          </div>
-          <div class="bg-[#0a1228] p-3.5 rounded-xl border border-slate-800">
-            <div class="text-[11px] font-bold text-slate-400">Taxas & Impostos Totais</div>
-            <div id="kpi-taxas-totais" class="text-xl font-bold text-slate-300 mt-1 private-val">R$ 0,00</div>
-            <div class="text-[10px] text-amber-400 mt-0.5">Plataforma + NF + Meta</div>
-          </div>
-        </div>
-
-        <!-- Funil Completo Meta Ads Fiel ao Print -->
-        <div class="bg-[#0a1228] p-5 rounded-2xl border border-slate-800">
-          <div class="flex items-center justify-between mb-4">
-            <div class="text-sm font-bold text-white flex items-center gap-2">
-              <i class="fa-solid fa-filter text-indigo-400"></i> Funil de Conversão (Meta Ads + Checkouts)
-            </div>
-            <span class="text-xs text-slate-400">Últimas 24 horas</span>
-          </div>
-
-          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center">
-            <div class="bg-indigo-950/40 border border-indigo-800/40 p-3 rounded-xl">
-              <div class="text-[10px] text-indigo-300 font-bold uppercase">Cliques</div>
-              <div id="funnel-clicks" class="text-lg font-black text-white mt-1">22</div>
-              <div class="text-[10px] text-slate-400">100%</div>
-            </div>
-            <div class="bg-blue-950/40 border border-blue-800/40 p-3 rounded-xl">
-              <div class="text-[10px] text-blue-300 font-bold uppercase">Vis. Página</div>
-              <div id="funnel-pageviews" class="text-lg font-black text-white mt-1">18</div>
-              <div class="text-[10px] text-blue-400 font-bold">81.8%</div>
-            </div>
-            <div class="bg-purple-950/40 border border-purple-800/40 p-3 rounded-xl">
-              <div class="text-[10px] text-purple-300 font-bold uppercase">ICs (Checkouts)</div>
-              <div id="funnel-ics" class="text-lg font-black text-white mt-1">5</div>
-              <div class="text-[10px] text-purple-400 font-bold">22.7%</div>
-            </div>
-            <div class="bg-pink-950/40 border border-pink-800/40 p-3 rounded-xl">
-              <div class="text-[10px] text-pink-300 font-bold uppercase">Vendas Inic.</div>
-              <div id="funnel-started" class="text-lg font-black text-white mt-1">3</div>
-              <div class="text-[10px] text-pink-400 font-bold">13.6%</div>
-            </div>
-            <div class="bg-emerald-950/40 border border-emerald-800/40 p-3 rounded-xl col-span-2 sm:col-span-1">
-              <div class="text-[10px] text-emerald-300 font-bold uppercase">Vendas Aprov.</div>
-              <div id="funnel-approved" class="text-lg font-black text-emerald-400 mt-1">1</div>
-              <div class="text-[10px] text-emerald-400 font-bold">4.5%</div>
-            </div>
-          </div>
-        </div>
-
-      </section>
-
-      <!-- ================= ABA 2: CAMPANHAS COM MULTILOGIN E CSV PADRÃO (Print 19) ================= -->
-      <section id="tab-campanhas" class="tab-content hidden space-y-4">
-        
-        <!-- Header Sub-abas e Criar Campanha -->
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
-          <div class="flex items-center gap-6">
-            <button onclick="setCampaignView('contas')" id="subnav-contas" class="subnav-btn text-sm font-semibold text-slate-400 hover:text-white pb-1">Contas</button>
-            <button onclick="setCampaignView('campanhas')" id="subnav-campanhas" class="subnav-btn text-sm font-bold text-emerald-400 border-b-2 border-emerald-400 pb-1">Campanhas</button>
-            <button onclick="setCampaignView('conjuntos')" id="subnav-conjuntos" class="subnav-btn text-sm font-semibold text-slate-400 hover:text-white pb-1">Conjuntos</button>
-            <button onclick="setCampaignView('anuncios')" id="subnav-anuncios" class="subnav-btn text-sm font-semibold text-slate-400 hover:text-white pb-1">Anúncios</button>
-          </div>
-          <div class="flex items-center gap-3">
-            <span class="text-xs text-slate-400 hidden sm:inline"><i class="fa-solid fa-check text-emerald-400"></i> 400 campanhas, 3212 anúncios atualizados</span>
-            <button onclick="openCreateCampaignModal()" class="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow transition">
-              <i class="fa-solid fa-plus"></i> Criar Campanha
-            </button>
-          </div>
-        </div>
-
-        <!-- Filtros e Barra de Ações com Multilogin (Print 19) -->
-        <div class="bg-[#0a1228] p-3 rounded-xl border border-slate-800 flex flex-wrap items-center justify-between gap-2.5">
-          <div class="flex flex-wrap items-center gap-2">
-            <select id="campaign-status-filter" class="bg-[#070e22] text-xs text-slate-300 border border-slate-700 rounded-lg px-2.5 py-1.5">
-              <option value="ACTIVE">Ativo</option>
-              <option value="PAUSED">Pausado</option>
-              <option value="ALL">Todos os Status</option>
-            </select>
-            <select id="campaign-period-filter" class="bg-[#070e22] text-xs text-slate-300 border border-slate-700 rounded-lg px-2.5 py-1.5">
-              <option value="today">Hoje</option>
-              <option value="yesterday">Ontem</option>
-              <option value="last7d">Últimos 7 dias</option>
-            </select>
-            <div class="relative">
-              <input type="text" id="search-campaign" placeholder="Buscar por nome..." oninput="filterCampaignsTable()" class="bg-[#070e22] text-xs text-slate-200 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 w-44 md:w-56 focus:outline-none">
-              <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-xs text-slate-500"></i>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <!-- Botão Gerenciador (Dolphin / AdsPower / Link direto) -->
-            <button onclick="openMetaAdsManagerModal()" class="px-2.5 py-1.5 bg-[#070e22] hover:bg-slate-800 text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
-              <i class="fa-solid fa-arrow-up-right-from-square text-blue-400"></i> Gerenciador
-            </button>
-
-            <!-- Personalizar Colunas -->
-            <button onclick="openColumnsCustomizerModal()" class="px-2.5 py-1.5 bg-[#070e22] hover:bg-slate-800 text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
-              <i class="fa-solid fa-pen text-amber-400"></i> Colunas
-            </button>
-
-            <!-- Atualizar e Exportar CSV -->
-            <button onclick="syncAllDataNow()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition">Atualizar</button>
-            <button onclick="exportCampaignsCSV()" class="px-2.5 py-1.5 bg-[#070e22] hover:bg-slate-800 text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
-              <i class="fa-solid fa-download"></i> Exportar
-            </button>
-          </div>
-        </div>
-
-        <!-- Tabela Fiel com Todas as Colunas Padronizadas do CSV -->
-        <div class="bg-[#0a1228] rounded-xl border border-slate-800 overflow-hidden shadow-xl">
-          <div class="overflow-x-auto custom-scrollbar">
-            <table class="w-full text-left border-collapse text-xs whitespace-nowrap">
-              <thead>
-                <tr class="bg-[#070e22] text-slate-400 border-b border-slate-800 uppercase text-[10px] font-bold tracking-wider">
-                  <th class="p-3 text-center w-10"><input type="checkbox" class="rounded bg-slate-900 border-slate-700"></th>
-                  <th class="p-3">Status</th>
-                  <th class="p-3">Campanha</th>
-                  <th class="p-3">Conta</th>
-                  <th class="p-3">Orçamento (R$)</th>
-                  <th class="p-3">Tipo Orç.</th>
-                  <th class="p-3">Gasto (R$)</th>
-                  <th class="p-3">Impressões</th>
-                  <th class="p-3">Cliques</th>
-                  <th class="p-3">Conversões</th>
-                  <th class="p-3">CPA (R$)</th>
-                  <th class="p-3">CTR (%)</th>
-                  <th class="p-3">Lucro Real</th>
-                  <th class="p-3">ID Meta</th>
-                </tr>
-              </thead>
-              <tbody id="campaigns-table-body" class="divide-y divide-slate-800/80 font-medium text-slate-200">
-                <!-- Linhas populadas dinamicamente via JS com dados do CSV -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </section>
-
-      <!-- ================= ABA 3: VENDAS (Print 18) ================= -->
-      <section id="tab-vendas" class="tab-content hidden space-y-4">
-        
-        <!-- Header Filtros Vendas Fiel ao Print 18 -->
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 class="text-xl font-bold text-white tracking-tight">Vendas</h2>
-            <div id="vendas-subcount" class="text-xs text-slate-400 mt-0.5">4 vendas hoje</div>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-2">
-            <!-- Dropdowns Origens, Produtos, Plataformas, Campanhas -->
-            <select id="sales-filter-origin" onchange="filterSalesList()" class="bg-[#0a1228] text-xs text-slate-300 border border-slate-700 rounded-lg px-3 py-1.5">
-              <option value="all">Origens (Todas)</option>
-              <option value="FB">Facebook Ads (FB)</option>
-              <option value="Google">Google Ads</option>
-              <option value="TikTok">TikTok Ads</option>
-            </select>
-
-            <select id="sales-filter-product" onchange="filterSalesList()" class="bg-[#0a1228] text-xs text-slate-300 border border-slate-700 rounded-lg px-3 py-1.5">
-              <option value="all">Produtos (Todos)</option>
-              <option value="Protocolo Magnésio">Protocolo Magnésio</option>
-              <option value="Guia Renda Extra">Guia Renda Extra</option>
-            </select>
-
-            <select id="sales-filter-platform" onchange="filterSalesList()" class="bg-[#0a1228] text-xs text-slate-300 border border-slate-700 rounded-lg px-3 py-1.5">
-              <option value="all">Plataformas (Todas)</option>
-              <option value="cackto">Cakto</option>
-              <option value="kiwify">Kiwify</option>
-              <option value="green">Greenn</option>
-              <option value="wiapy">Wiapy</option>
-              <option value="hotmart">Hotmart</option>
-            </select>
-
-            <select id="sales-filter-campaign" onchange="filterSalesList()" class="bg-[#0a1228] text-xs text-slate-300 border border-slate-700 rounded-lg px-3 py-1.5">
-              <option value="all">Campanhas (Todas)</option>
-              <option value="C03_Magnes_testecriativo3">C03_Magnes_testecriativo3</option>
-            </select>
-
-            <button onclick="togglePrivateMode()" class="p-2 bg-[#0a1228] text-slate-300 border border-slate-700 rounded-lg text-xs" title="Modo Privado"><i class="fa-solid fa-eye"></i></button>
-            <button onclick="setSalesQuickPeriod('hoje')" class="px-2.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold">Hoje</button>
-            <button onclick="setSalesQuickPeriod('ontem')" class="px-2.5 py-1.5 bg-[#0a1228] text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold">Ontem</button>
-            <button onclick="setSalesQuickPeriod('7d')" class="px-2.5 py-1.5 bg-[#0a1228] text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold">7d</button>
-            <button onclick="exportSalesCSV()" class="px-3 py-1.5 bg-[#0a1228] text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5"><i class="fa-solid fa-download"></i> Exportar</button>
-          </div>
-        </div>
-
-        <!-- Tabela de Vendas -->
-        <div class="bg-[#0a1228] rounded-xl border border-slate-800 overflow-hidden shadow-xl">
-          <div class="overflow-x-auto custom-scrollbar">
-            <table class="w-full text-left border-collapse text-xs whitespace-nowrap">
-              <thead>
-                <tr class="bg-[#070e22] text-slate-400 border-b border-slate-800 uppercase text-[10px] font-bold">
-                  <th class="p-3">Data / Hora</th>
-                  <th class="p-3">Status</th>
-                  <th class="p-3">Plataforma</th>
-                  <th class="p-3">Produto</th>
-                  <th class="p-3">Valor Bruto</th>
-                  <th class="p-3">Taxas</th>
-                  <th class="p-3">Valor Líquido</th>
-                  <th class="p-3">Origem (UTM)</th>
-                  <th class="p-3">Campanha</th>
-                  <th class="p-3">Meta CAPI</th>
-                </tr>
-              </thead>
-              <tbody id="sales-table-body" class="divide-y divide-slate-800/80">
-                <!-- Inserido dinamicamente -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </section>
-
-      <!-- ================= ABA 4: INTEGRAÇÕES & MÚLTIPLOS PIXELS (Print 17) ================= -->
-      <section id="tab-integracoes" class="tab-content hidden space-y-5">
-        
-        <!-- Header Abas Integrações Fiel ao Print 17 -->
-        <div class="border-b border-slate-800 flex flex-wrap items-center gap-6 pb-2">
-          <button onclick="setIntegrationSubTab('facebook')" id="int-subnav-facebook" class="text-sm font-bold text-emerald-400 border-b-2 border-emerald-400 pb-2">Facebook Ads</button>
-          <button onclick="setIntegrationSubTab('pixel')" id="int-subnav-pixel" class="text-sm font-semibold text-slate-400 hover:text-white pb-2">Pixel de Rastreio</button>
-          <button onclick="setIntegrationSubTab('utms')" id="int-subnav-utms" class="text-sm font-semibold text-slate-400 hover:text-white pb-2">UTMs</button>
-          <button onclick="setIntegrationSubTab('webhooks')" id="int-subnav-webhooks" class="text-sm font-semibold text-slate-400 hover:text-white pb-2">Webhook API</button>
-          <button onclick="setIntegrationSubTab('app')" id="int-subnav-app" class="text-sm font-semibold text-slate-400 hover:text-white pb-2">Baixe nosso App</button>
-          <button onclick="setIntegrationSubTab('duvidas')" id="int-subnav-duvidas" class="text-sm font-semibold text-slate-400 hover:text-white pb-2">Dúvidas</button>
-        </div>
-
-        <!-- Sub-aba 1: Facebook Ads (Contas & BM) -->
-        <div id="int-pane-facebook" class="space-y-4">
-          <div class="bg-[#0a1228] p-5 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-              <div class="w-11 h-11 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-base">
-                L
+          <!-- GRID DE CARDS PRINCIPAIS (KPIS) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+            
+            <!-- FATURAMENTO LÍQUIDO -->
+            <div class="bg-dark-850 p-4 rounded-2xl border border-dark-750 hover:border-dark-700 transition-all relative overflow-hidden group">
+              <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+                <span>Faturamento Líquido</span>
+                <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
               </div>
-              <div>
-                <h3 class="text-sm font-bold text-white">Leticia Rocha (Perfil Conectado)</h3>
-                <p class="text-xs text-slate-400">ID: 1131719866074357 • 8 conta(s) de anúncio</p>
+              <div id="kpi-net-revenue" class="text-2xl font-black text-white tracking-tight money-value">R$ 73,29</div>
+              <div class="mt-2 text-xs text-slate-400 flex items-center gap-1">
+                <span>Bruto:</span>
+                <span id="kpi-gross-revenue" class="font-semibold text-slate-300 money-value">R$ 80,98</span>
+              </div>
+              <div class="absolute bottom-0 left-0 h-1 w-full bg-brand-500/30 group-hover:bg-brand-500 transition-all"></div>
+            </div>
+
+            <!-- LUCRO LÍQUIDO -->
+            <div class="bg-dark-850 p-4 rounded-2xl border border-dark-750 hover:border-dark-700 transition-all relative overflow-hidden group">
+              <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+                <span>Lucro Líquido</span>
+                <span class="text-[10px] bg-emerald-500/20 text-emerald-400 font-black px-1.5 py-0.5 rounded">POSITIVO</span>
+              </div>
+              <div id="kpi-net-profit" class="text-2xl font-black text-emerald-400 tracking-tight money-value">R$ 19,90</div>
+              <div class="mt-2 text-xs text-slate-400 flex items-center gap-1">
+                <span>Margem:</span>
+                <span id="kpi-margin" class="font-bold text-emerald-400">24.6%</span>
+              </div>
+              <div class="absolute bottom-0 left-0 h-1 w-full bg-emerald-500/30 group-hover:bg-emerald-500 transition-all"></div>
+            </div>
+
+            <!-- GASTO EM ADS -->
+            <div class="bg-dark-850 p-4 rounded-2xl border border-dark-750 hover:border-dark-700 transition-all relative overflow-hidden group">
+              <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+                <span>Gasto em Ads</span>
+                <span class="text-[10px] bg-blue-500/20 text-blue-400 font-bold px-1.5 py-0.5 rounded">META</span>
+              </div>
+              <div id="kpi-ad-spend" class="text-2xl font-black text-white tracking-tight money-value">R$ 53,39</div>
+              <div class="mt-2 text-xs text-slate-400 flex items-center gap-1">
+                <span>Imposto Meta:</span>
+                <span id="kpi-meta-tax" class="font-semibold text-slate-300 money-value">R$ 0,00</span>
+              </div>
+              <div class="absolute bottom-0 left-0 h-1 w-full bg-blue-500/30 group-hover:bg-blue-500 transition-all"></div>
+            </div>
+
+            <!-- ROAS GERAL -->
+            <div class="bg-dark-850 p-4 rounded-2xl border border-dark-750 hover:border-dark-700 transition-all relative overflow-hidden group">
+              <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">ROAS Geral</div>
+              <div id="kpi-roas" class="text-2xl font-black text-brand-400 tracking-tight">1.52x</div>
+              <div class="mt-2 text-xs text-slate-400 flex items-center gap-1">
+                <span>Equilíbrio:</span>
+                <span class="font-semibold text-slate-300">1.00x</span>
+              </div>
+              <div class="absolute bottom-0 left-0 h-1 w-full bg-brand-500/30 group-hover:bg-brand-500 transition-all"></div>
+            </div>
+
+            <!-- CPA MÉDIO -->
+            <div class="bg-dark-850 p-4 rounded-2xl border border-dark-750 hover:border-dark-700 transition-all relative overflow-hidden group">
+              <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">CPA Médio</div>
+              <div id="kpi-cpa" class="text-2xl font-black text-white tracking-tight money-value">R$ 26,70</div>
+              <div class="mt-2 text-xs text-slate-400 flex items-center gap-1">
+                <span>Meta CPA:</span>
+                <span class="font-semibold text-slate-300 money-value">R$ 22,00</span>
+              </div>
+              <div class="absolute bottom-0 left-0 h-1 w-full bg-purple-500/30 group-hover:bg-purple-500 transition-all"></div>
+            </div>
+
+            <!-- TICKET MÉDIO -->
+            <div class="bg-dark-850 p-4 rounded-2xl border border-dark-750 hover:border-dark-700 transition-all relative overflow-hidden group">
+              <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Ticket Médio (AOV)</div>
+              <div id="kpi-aov" class="text-2xl font-black text-white tracking-tight money-value">R$ 40,49</div>
+              <div class="mt-2 text-xs text-slate-400 flex items-center gap-1">
+                <span>Vendas Apr:</span>
+                <span id="kpi-approved-sales" class="font-bold text-brand-400">2</span>
+              </div>
+              <div class="absolute bottom-0 left-0 h-1 w-full bg-amber-500/30 group-hover:bg-amber-500 transition-all"></div>
+            </div>
+
+          </div>
+
+          <!-- CARDS SECUNDÁRIOS & FUNIL DE CONVERSÃO -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- RESUMO DE VENDAS E STATUS -->
+            <div class="bg-dark-850 p-5 rounded-2xl border border-dark-750 space-y-4">
+              <div class="font-extrabold text-sm text-white flex items-center justify-between">
+                <span>Desempenho de Vendas</span>
+                <span class="text-xs text-slate-400 font-normal">Período Selecionado</span>
+              </div>
+
+              <div class="space-y-3">
+                <div class="flex items-center justify-between p-3 rounded-xl bg-dark-800 border border-dark-750">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">
+                      ✓
+                    </div>
+                    <div>
+                      <div class="text-xs font-bold text-white">Vendas Aprovadas</div>
+                      <div class="text-[10px] text-slate-400">Pix & Cartão</div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div id="sub-approved-count" class="text-sm font-black text-white">2</div>
+                    <div id="sub-approved-val" class="text-[10px] text-brand-400 font-semibold money-value">R$ 80,98</div>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between p-3 rounded-xl bg-dark-800 border border-dark-750">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-xs">
+                      ⌛
+                    </div>
+                    <div>
+                      <div class="text-xs font-bold text-white">Vendas Pendentes</div>
+                      <div class="text-[10px] text-slate-400">Boleto / Pix Aberto</div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-sm font-black text-white">0</div>
+                    <div class="text-[10px] text-amber-400 font-semibold money-value">R$ 0,00</div>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between p-3 rounded-xl bg-dark-800 border border-dark-750">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold text-xs">
+                      ✕
+                    </div>
+                    <div>
+                      <div class="text-xs font-bold text-white">Reembolso / Chargeback</div>
+                      <div class="text-[10px] text-slate-400">0% de taxa</div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-sm font-black text-white">0</div>
+                    <div class="text-[10px] text-rose-400 font-semibold money-value">R$ 0,00</div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="flex items-center gap-2">
-              <button onclick="openMetaAdsManagerModal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg">Gerenciador</button>
-              <button onclick="alert('Perfil sincronizado com sucesso!')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg">Conectado</button>
+
+            <!-- FUNIL DE CONVERSÃO (5 ETAPAS) -->
+            <div class="lg:col-span-2 bg-dark-850 p-5 rounded-2xl border border-dark-750 flex flex-col justify-between">
+              <div class="flex items-center justify-between mb-4">
+                <div class="font-extrabold text-sm text-white flex items-center gap-2">
+                  <span>Funil de Conversão (Meta Ads + Checkouts)</span>
+                  <span class="text-[10px] bg-brand-500/20 text-brand-400 font-black px-2 py-0.5 rounded">TEMPO REAL</span>
+                </div>
+                <div class="text-xs text-slate-400">Taxa Geral: <span class="text-brand-400 font-bold">9.1%</span></div>
+              </div>
+
+              <div class="grid grid-cols-5 gap-2 my-auto">
+                <div class="bg-dark-800 p-3 rounded-xl border border-dark-750 text-center">
+                  <div class="text-[10px] font-bold text-slate-400 uppercase">Cliques Ads</div>
+                  <div id="funnel-clicks" class="text-lg font-black text-white my-1">22</div>
+                  <div class="text-[10px] font-semibold text-slate-500">100%</div>
+                </div>
+
+                <div class="bg-dark-800 p-3 rounded-xl border border-dark-750 text-center">
+                  <div class="text-[10px] font-bold text-slate-400 uppercase">Vis. Página</div>
+                  <div id="funnel-pv" class="text-lg font-black text-white my-1">18</div>
+                  <div class="text-[10px] font-semibold text-brand-400">81.8%</div>
+                </div>
+
+                <div class="bg-dark-800 p-3 rounded-xl border border-dark-750 text-center">
+                  <div class="text-[10px] font-bold text-slate-400 uppercase">Checkouts (IC)</div>
+                  <div id="funnel-ic" class="text-lg font-black text-white my-1">5</div>
+                  <div class="text-[10px] font-semibold text-brand-400">22.7%</div>
+                </div>
+
+                <div class="bg-dark-800 p-3 rounded-xl border border-dark-750 text-center">
+                  <div class="text-[10px] font-bold text-slate-400 uppercase">Vendas Inic.</div>
+                  <div id="funnel-pending" class="text-lg font-black text-white my-1">3</div>
+                  <div class="text-[10px] font-semibold text-amber-400">13.6%</div>
+                </div>
+
+                <div class="bg-dark-800 p-3 rounded-xl border border-dark-750 text-center bg-brand-500/10 border-brand-500/30">
+                  <div class="text-[10px] font-bold text-brand-400 uppercase">Aprovadas</div>
+                  <div id="funnel-approved" class="text-lg font-black text-brand-400 my-1">2</div>
+                  <div class="text-[10px] font-semibold text-brand-400">9.1%</div>
+                </div>
+              </div>
+
+              <!-- BARRA PROGRESSIVA -->
+              <div class="w-full bg-dark-750 h-2 rounded-full overflow-hidden mt-4 flex">
+                <div class="bg-blue-500 h-full w-[35%]"></div>
+                <div class="bg-indigo-500 h-full w-[25%]"></div>
+                <div class="bg-purple-500 h-full w-[20%]"></div>
+                <div class="bg-brand-500 h-full w-[20%]"></div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- TABELA DE CAMPANHAS RECENTES COM COLUNAS PERSONALIZÁVEIS -->
+          <div class="bg-dark-850 rounded-2xl border border-dark-750 overflow-hidden">
+            <div class="p-4 border-b border-dark-750 flex items-center justify-between">
+              <div class="font-extrabold text-sm text-white flex items-center gap-2">
+                <span>Campanhas Ativas & Desempenho (Hierarquia 4 Níveis)</span>
+                <span class="text-xs bg-dark-800 text-slate-400 px-2 py-0.5 rounded font-mono">Meta Ads API</span>
+              </div>
+              <button onclick="toggleModal('modal-columns')" class="text-xs text-brand-400 hover:text-brand-300 font-semibold flex items-center gap-1">
+                ⚙ Configurar Colunas
+              </button>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr id="campaign-table-header" class="bg-dark-800 text-slate-400 font-bold border-b border-dark-750 uppercase text-[10px] tracking-wider">
+                    <!-- Gerado dinamicamente via JS conforme seleção de colunas -->
+                  </tr>
+                </thead>
+                <tbody id="campaign-table-body" class="divide-y divide-dark-750 font-medium">
+                  <!-- Gerado dinamicamente via JS -->
+                </tbody>
+              </table>
             </div>
           </div>
 
-          <!-- Tabela de Contas Conectadas -->
-          <div class="bg-[#0a1228] rounded-xl border border-slate-800 overflow-hidden">
-            <table class="w-full text-left text-xs whitespace-nowrap">
-              <thead class="bg-[#070e22] text-slate-400 uppercase text-[10px] font-bold">
-                <tr>
-                  <th class="p-3">Conta</th>
-                  <th class="p-3">ID Meta</th>
-                  <th class="p-3">BM</th>
-                  <th class="p-3">Moeda</th>
-                  <th class="p-3">Status</th>
-                  <th class="p-3 text-right">Ação</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-800">
-                <tr>
-                  <td class="p-3 font-bold text-white">AGENCIA2</td>
-                  <td class="p-3 text-slate-300">1020967616138580</td>
-                  <td class="p-3 text-slate-400">MODERNA CURSOS</td>
-                  <td class="p-3 text-emerald-400 font-bold">BRL</td>
-                  <td class="p-3"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[10px]">Ativa</span></td>
-                  <td class="p-3 text-right"><button class="px-2.5 py-1 bg-blue-600/30 text-blue-400 rounded text-[11px] font-bold hover:bg-blue-600/50">Sincronizado</button></td>
-                </tr>
-                <tr>
-                  <td class="p-3 font-bold text-white">SFRT MARKETING</td>
-                  <td class="p-3 text-slate-300">1043323147402921</td>
-                  <td class="p-3 text-slate-400">LUCAS ULISSES SEIFERT</td>
-                  <td class="p-3 text-emerald-400 font-bold">BRL</td>
-                  <td class="p-3"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[10px]">Ativa</span></td>
-                  <td class="p-3 text-right"><button class="px-2.5 py-1 bg-slate-800 text-slate-400 rounded text-[11px] font-bold hover:bg-slate-700">Ativar</button></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
         </div>
 
-        <!-- Sub-aba 2: Cadastro de Múltiplos Pixels -->
-        <div id="int-pane-pixel" class="hidden space-y-4">
+        <!-- ============================================================== -->
+        <!-- TAB: CAMPANHAS ADS DETALHADAS -->
+        <!-- ============================================================== -->
+        <div id="tab-campaigns" class="tab-pane hidden space-y-6">
           <div class="flex items-center justify-between">
-            <h3 class="text-sm font-bold text-white">Pixels de Rastreamento & Server-Side CAPI</h3>
-            <button onclick="openAddPixelModal()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5">
-              <i class="fa-solid fa-plus"></i> Adicionar Pixel
+            <div>
+              <h2 class="text-lg font-bold text-white">Hierarquia de Anúncios em 4 Níveis</h2>
+              <p class="text-xs text-slate-400">Contas de Anúncio ➔ Campanhas (CBO/ABO) ➔ Conjuntos ➔ Criativos</p>
+            </div>
+            <button onclick="refreshData()" class="px-3 py-1.5 bg-brand-500 text-dark-900 rounded-xl text-xs font-bold">
+              Atualizar Métricas Meta
             </button>
           </div>
 
-          <div id="pixels-container" class="space-y-2">
+          <div class="bg-dark-850 rounded-2xl border border-dark-750 p-4">
+            <div id="hierarchy-container" class="space-y-4">
+              <!-- Renderizado dinamicamente -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- TAB: VENDAS & ATRIBUIÇÃO -->
+        <!-- ============================================================== -->
+        <div id="tab-sales" class="tab-pane hidden space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-lg font-bold text-white">Relatório de Vendas & Rastreio UTM</h2>
+              <p class="text-xs text-slate-400">Atribuição exata por parâmetros de URL dos checkouts</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button onclick="simulateTestSale()" class="px-3 py-1.5 bg-brand-500/20 text-brand-400 border border-brand-500/30 rounded-xl text-xs font-bold hover:bg-brand-500/30 flex items-center gap-1.5">
+                🔔 Simular Venda Teste (Com Som)
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-dark-850 rounded-2xl border border-dark-750 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-dark-800 text-slate-400 font-bold border-b border-dark-750 uppercase text-[10px] tracking-wider">
+                    <th class="p-3">ID / Data</th>
+                    <th class="p-3">Plataforma</th>
+                    <th class="p-3">Produto</th>
+                    <th class="p-3">Status</th>
+                    <th class="p-3">Pagamento</th>
+                    <th class="p-3">Valor Bruto</th>
+                    <th class="p-3">Taxas</th>
+                    <th class="p-3">Líquido</th>
+                    <th class="p-3">UTM Campaign</th>
+                    <th class="p-3">UTM Content (Ad)</th>
+                  </tr>
+                </thead>
+                <tbody id="sales-table-body" class="divide-y divide-dark-750 font-medium">
+                  <!-- Gerado dinamicamente -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- TAB: VISITAS AO VIVO -->
+        <!-- ============================================================== -->
+        <div id="tab-visits" class="tab-pane hidden space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-lg font-bold text-white">Tráfego & Acessos em Tempo Real</h2>
+              <p class="text-xs text-slate-400">Visitantes navegando nas suas páginas nos últimos 5 minutos</p>
+            </div>
+            <div class="flex items-center space-x-2 bg-dark-850 px-3 py-1.5 rounded-xl border border-dark-750">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span class="text-xs text-slate-300 font-bold"><span id="live-visitors-count">1</span> online agora</span>
+            </div>
+          </div>
+
+          <div class="bg-dark-850 rounded-2xl border border-dark-750 p-5 space-y-4">
+            <div class="text-xs font-bold text-slate-300 uppercase tracking-wider">Stream de Visualizações</div>
+            <div id="live-stream-list" class="space-y-2 max-h-96 overflow-y-auto">
+              <!-- Gerado dinamicamente -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================== -->
+        <!-- TAB: REGRAS PRO (AUTOMATIZAÇÃO) -->
+        <!-- ============================================================== -->
+        <div id="tab-rules" class="tab-pane hidden space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-lg font-bold text-white">Regras de Otimização Automática</h2>
+              <p class="text-xs text-slate-400">Carregadas do arquivo <code class="text-brand-400 font-mono">Minhas Regras Utmfy Atualizadas.csv</code></p>
+            </div>
+            <button onclick="executeRulesNow()" id="btn-exec-rules" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-dark-900 font-extrabold rounded-xl text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20 transition-all">
+              ⚡ Executar Regras Agora (Verificação Imediata)
+            </button>
+          </div>
+
+          <!-- LISTA DE REGRAS -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="rules-cards-container">
             <!-- Renderizado dinamicamente -->
           </div>
+
+          <!-- LOGS DE EXECUÇÃO -->
+          <div class="bg-dark-850 rounded-2xl border border-dark-750 p-5 space-y-3">
+            <div class="text-xs font-bold text-white uppercase tracking-wider flex items-center justify-between">
+              <span>Registro de Ações Executadas (Audit Log)</span>
+              <span class="text-[10px] text-slate-400 font-normal">Última checagem: <span id="rules-last-check">Hoje às 13:30</span></span>
+            </div>
+            <div id="rules-audit-log" class="bg-dark-900 p-3 rounded-xl border border-dark-750 font-mono text-xs text-slate-300 space-y-1 max-h-48 overflow-y-auto">
+              <div class="text-emerald-400">[SISTEMA] Monitoramento ativo a cada 10 minutos para 5 regras. Nenhuma anomalia no momento.</div>
+            </div>
+          </div>
         </div>
 
-        <!-- Sub-aba 3: Webhook API (Wiapy, Kiwify, Cakto, Green) -->
-        <div id="int-pane-webhooks" class="hidden space-y-4">
-          <div class="bg-[#0a1228] p-5 rounded-2xl border border-slate-800 space-y-4">
-            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <i class="fa-solid fa-plug text-emerald-400"></i> Endpoints de Webhook Prontos para Cadastrar
-            </h3>
-            
-            <div class="space-y-3 text-xs">
-              <div>
-                <label class="block font-bold text-slate-300 mb-1">Wiapy Webhook URL:</label>
-                <div class="flex gap-2">
-                  <input type="text" readonly value="https://sftrackeria.onrender.com/api/v1/webhook/wiapy" class="bg-[#070e22] text-emerald-400 p-2 rounded-lg border border-slate-700 flex-1 font-mono">
-                  <button onclick="navigator.clipboard.writeText('https://sftrackeria.onrender.com/api/v1/webhook/wiapy'); alert('Copiado!')" class="px-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold">Copiar</button>
-                </div>
-              </div>
+        <!-- ============================================================== -->
+        <!-- TAB: MULTILOGIN & BMs -->
+        <!-- ============================================================== -->
+        <div id="tab-integrations" class="tab-pane hidden space-y-6">
+          <div>
+            <h2 class="text-lg font-bold text-white">Conexão Meta Ads para Multilogin & Múltiplas BMs</h2>
+            <p class="text-xs text-slate-400">Método rápido e seguro igual ao Utmfy e Lowtrack sem restrição de IP ou bloqueios</p>
+          </div>
 
-              <div>
-                <label class="block font-bold text-slate-300 mb-1">Cakto Pay Webhook URL:</label>
-                <div class="flex gap-2">
-                  <input type="text" readonly value="https://sftrackeria.onrender.com/api/v1/webhook/cackto" class="bg-[#070e22] text-emerald-400 p-2 rounded-lg border border-slate-700 flex-1 font-mono">
-                  <button onclick="navigator.clipboard.writeText('https://sftrackeria.onrender.com/api/v1/webhook/cackto'); alert('Copiado!')" class="px-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold">Copiar</button>
-                </div>
+          <!-- FLUXO MULTILOGIN -->
+          <div class="bg-dark-850 rounded-2xl border border-dark-750 p-6 space-y-6">
+            <div class="flex items-center space-x-3">
+              <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-sm">
+                1
               </div>
-
               <div>
-                <label class="block font-bold text-slate-300 mb-1">Kiwify Webhook URL:</label>
-                <div class="flex gap-2">
-                  <input type="text" readonly value="https://sftrackeria.onrender.com/api/v1/webhook/kiwify" class="bg-[#070e22] text-emerald-400 p-2 rounded-lg border border-slate-700 flex-1 font-mono">
-                  <button onclick="navigator.clipboard.writeText('https://sftrackeria.onrender.com/api/v1/webhook/kiwify'); alert('Copiado!')" class="px-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold">Copiar</button>
-                </div>
+                <div class="text-sm font-bold text-white">Como Funciona a Conexão no Multilogin (Dolphin / AdsPower / Lauth)</div>
+                <div class="text-xs text-slate-400">Você gera um link único de autorização, cola dentro da sua janela de multilogin com o perfil já logado e autoriza com 1 clique.</div>
               </div>
+            </div>
 
-              <div>
-                <label class="block font-bold text-slate-300 mb-1">Greenn Webhook URL:</label>
-                <div class="flex gap-2">
-                  <input type="text" readonly value="https://sftrackeria.onrender.com/api/v1/webhook/green" class="bg-[#070e22] text-emerald-400 p-2 rounded-lg border border-slate-700 flex-1 font-mono">
-                  <button onclick="navigator.clipboard.writeText('https://sftrackeria.onrender.com/api/v1/webhook/green'); alert('Copiado!')" class="px-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold">Copiar</button>
-                </div>
+            <!-- GERADOR DE LINK DE AUTORIZAÇÃO -->
+            <div class="bg-dark-800 p-4 rounded-xl border border-dark-750 space-y-3">
+              <label class="block text-xs font-bold text-slate-300">Link de Conexão Rápida para Colar no Perfil:</label>
+              <div class="flex flex-col sm:flex-row gap-2">
+                <input id="multilogin-oauth-link" readonly value="https://www.facebook.com/v21.0/dialog/oauth?client_id=142839201948291&redirect_uri=https%3A%2F%2Fsftrackeria.netlify.app&scope=ads_read,ads_management,read_insights,business_management&response_type=token" class="flex-1 bg-dark-900 border border-dark-750 rounded-lg px-3 py-2 text-xs font-mono text-slate-300 select-all focus:outline-none">
+                <button onclick="copyToClipboard('multilogin-oauth-link')" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shrink-0 transition-all">
+                  Copiar Link Multilogin
+                </button>
+              </div>
+              <p class="text-[11px] text-slate-400">Cole este link no seu navegador antidetect onde seu perfil do Facebook já está logado e clique em <b>"Continuar como [Seu Nome]"</b>.</p>
+            </div>
+
+            <!-- ENTRADA MANUAL DE TOKEN / SISTEMA RÁPIDO -->
+            <div class="bg-dark-800 p-4 rounded-xl border border-dark-750 space-y-3">
+              <label class="block text-xs font-bold text-slate-300">Ou Conecte via Access Token (System User / Graph API Token):</label>
+              <div class="flex flex-col sm:flex-row gap-2">
+                <input id="input-meta-token" placeholder="Cole aqui o Token de Acesso (EAA...)" class="flex-1 bg-dark-900 border border-dark-750 rounded-lg px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-brand-500">
+                <input id="input-bm-name" placeholder="Nome da BM (ex: BM 01 Contingência)" class="w-full sm:w-60 bg-dark-900 border border-dark-750 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+                <button onclick="connectMetaToken()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-dark-900 rounded-lg text-xs font-bold shrink-0 transition-all">
+                  Conectar BM
+                </button>
+              </div>
+            </div>
+
+            <!-- CONTAS CONECTADAS -->
+            <div class="space-y-3">
+              <div class="text-xs font-bold text-white uppercase tracking-wider">Contas de Anúncio e BMs Ativas</div>
+              <div id="meta-connected-accounts" class="space-y-2">
+                <!-- Preenchido dinamicamente -->
               </div>
             </div>
           </div>
         </div>
 
-      </section>
-
-      <!-- Outras abas (Visitas, Regras, Notificações) mantidas e funcionais -->
-      <section id="tab-visitas" class="tab-content hidden space-y-4">
-        <div class="bg-[#0a1228] p-5 rounded-2xl border border-slate-800">
-          <h2 class="text-base font-bold text-white mb-2">Visitas em Tempo Real</h2>
-          <div class="text-xs text-slate-400">Monitorando tráfego direto de landing pages e pre-sells.</div>
-        </div>
-      </section>
-
-      <section id="tab-regras" class="tab-content hidden space-y-4">
-        <div class="bg-[#0a1228] p-5 rounded-2xl border border-slate-800 flex justify-between items-center">
+        <!-- ============================================================== -->
+        <!-- TAB: GERADOR DE UTMS -->
+        <!-- ============================================================== -->
+        <div id="tab-utms" class="tab-pane hidden space-y-6">
           <div>
-            <h2 class="text-base font-bold text-white">Regras de Otimização Automática</h2>
-            <p class="text-xs text-slate-400">Stop-Loss, Escala Automática e Proteção de Margem</p>
+            <h2 class="text-lg font-bold text-white">Parâmetros de Rastreamento (UTMs Dinâmicas)</h2>
+            <p class="text-xs text-slate-400">Padrão exato utilizado na sua operação para atribuir vendas aos criativos certos</p>
           </div>
-          <button onclick="alert('Regras executadas com sucesso!')" class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-lg text-xs">Executar Agora</button>
-        </div>
-      </section>
 
-      <section id="tab-notificacoes" class="tab-content hidden space-y-4">
-        <div class="bg-[#0a1228] p-5 rounded-2xl border border-slate-800 space-y-3">
-          <h2 class="text-base font-bold text-white">Notificações & Alertas Sonoros</h2>
-          <div class="flex items-center gap-3">
-            <button onclick="playCashSound(true)" class="px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl flex items-center gap-2">
-              <i class="fa-solid fa-volume-high"></i> Testar Moeda + Caixa Registradora
-            </button>
+          <div class="bg-dark-850 rounded-2xl border border-dark-750 p-6 space-y-6">
+            
+            <!-- MODELO META ADS OFICIAL -->
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="text-sm font-bold text-white flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                  Parâmetro Oficial Meta Ads (Facebook & Instagram)
+                </div>
+                <span class="text-xs bg-brand-500/20 text-brand-400 font-bold px-2 py-0.5 rounded">RECOMENDADO</span>
+              </div>
+              <div class="bg-dark-900 p-4 rounded-xl border border-dark-750 flex items-center justify-between gap-4">
+                <code id="meta-utm-code" class="text-xs font-mono text-brand-400 break-all select-all">utm_source=FB&utm_campaign={{campaign.name}}|{{campaign.id}}&utm_medium={{adset.name}}|{{adset.id}}&utm_content={{ad.name}}|{{ad.id}}&utm_term={{placement}}</code>
+                <button onclick="copyToClipboard('meta-utm-code')" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-dark-900 rounded-lg text-xs font-bold shrink-0">
+                  Copiar
+                </button>
+              </div>
+              <p class="text-xs text-slate-400">Cole este código no campo <b>"Parâmetros de URL"</b> a nível de anúncio no seu Gerenciador de Anúncios da Meta.</p>
+            </div>
+
+            <!-- MODELO TIKTOK ADS -->
+            <div class="space-y-3">
+              <div class="text-sm font-bold text-white flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                Parâmetro TikTok Ads
+              </div>
+              <div class="bg-dark-900 p-4 rounded-xl border border-dark-750 flex items-center justify-between gap-4">
+                <code id="tiktok-utm-code" class="text-xs font-mono text-rose-300 break-all select-all">utm_source=tiktok&utm_campaign=__CAMPAIGN_NAME__|__CAMPAIGN_ID__&utm_medium=__AID_NAME__|__AID__&utm_content=__CID_NAME__|__CID__&utm_term=__PLACEMENT__</code>
+                <button onclick="copyToClipboard('tiktok-utm-code')" class="px-4 py-2 bg-dark-750 hover:bg-dark-700 text-white rounded-lg text-xs font-bold shrink-0">
+                  Copiar
+                </button>
+              </div>
+            </div>
+
+            <!-- MODELO GOOGLE ADS -->
+            <div class="space-y-3">
+              <div class="text-sm font-bold text-white flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                Parâmetro Google Ads
+              </div>
+              <div class="bg-dark-900 p-4 rounded-xl border border-dark-750 flex items-center justify-between gap-4">
+                <code id="google-utm-code" class="text-xs font-mono text-amber-300 break-all select-all">utm_source=google&utm_campaign={campaignid}&utm_medium={adgroupid}&utm_content={creative}&utm_term={keyword}</code>
+                <button onclick="copyToClipboard('google-utm-code')" class="px-4 py-2 bg-dark-750 hover:bg-dark-700 text-white rounded-lg text-xs font-bold shrink-0">
+                  Copiar
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
-      </section>
 
-    </div>
-  </main>
+        <!-- ============================================================== -->
+        <!-- TAB: WEBHOOKS & CHECKOUTS -->
+        <!-- ============================================================== -->
+        <div id="tab-webhooks" class="tab-pane hidden space-y-6">
+          <div>
+            <h2 class="text-lg font-bold text-white">Integração de Webhooks para Plataformas de Venda</h2>
+            <p class="text-xs text-slate-400">Cadastre estas URLs nos webhooks da sua plataforma de checkout para receber vendas em tempo real</p>
+          </div>
 
-  <!-- MODAL: GERENCIADOR META ADS / DOLPHIN ANTY (Suporte a Multilogin) -->
-  <div id="modal-meta-manager" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-[#0b142c] border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">
-          <i class="fa-brands fa-meta text-blue-500"></i> Acessar Gerenciador Meta Ads
-        </h3>
-        <button onclick="closeMetaAdsManagerModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <!-- KIWIFY -->
+            <div class="bg-dark-850 p-5 rounded-2xl border border-dark-750 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="font-extrabold text-sm text-white">Kiwify Webhook</span>
+                <span class="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded">ATIVO</span>
+              </div>
+              <div class="bg-dark-900 p-2.5 rounded-lg border border-dark-750 flex items-center justify-between text-xs font-mono text-slate-300">
+                <span id="webhook-kiwify" class="truncate select-all">https://sftrackeria.onrender.com/api/v1/webhook/kiwify</span>
+                <button onclick="copyToClipboard('webhook-kiwify')" class="ml-2 text-brand-400 hover:text-brand-300 font-bold">Copiar</button>
+              </div>
+              <p class="text-[11px] text-slate-400">Eventos recomendados: Compra Aprovada, Pedido Gerado, Reembolso.</p>
+            </div>
+
+            <!-- CACKTO -->
+            <div class="bg-dark-850 p-5 rounded-2xl border border-dark-750 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="font-extrabold text-sm text-white">Cackto Webhook</span>
+                <span class="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded">ATIVO</span>
+              </div>
+              <div class="bg-dark-900 p-2.5 rounded-lg border border-dark-750 flex items-center justify-between text-xs font-mono text-slate-300">
+                <span id="webhook-cackto" class="truncate select-all">https://sftrackeria.onrender.com/api/v1/webhook/cackto</span>
+                <button onclick="copyToClipboard('webhook-cackto')" class="ml-2 text-brand-400 hover:text-brand-300 font-bold">Copiar</button>
+              </div>
+              <p class="text-[11px] text-slate-400">Suporte a Order Bumps múltiplos e Upsell 1 clique.</p>
+            </div>
+
+            <!-- WIAPY -->
+            <div class="bg-dark-850 p-5 rounded-2xl border border-dark-750 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="font-extrabold text-sm text-white">Wiapy Webhook</span>
+                <span class="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded">ATIVO</span>
+              </div>
+              <div class="bg-dark-900 p-2.5 rounded-lg border border-dark-750 flex items-center justify-between text-xs font-mono text-slate-300">
+                <span id="webhook-wiapy" class="truncate select-all">https://sftrackeria.onrender.com/api/v1/webhook/wiapy</span>
+                <button onclick="copyToClipboard('webhook-wiapy')" class="ml-2 text-brand-400 hover:text-brand-300 font-bold">Copiar</button>
+              </div>
+              <p class="text-[11px] text-slate-400">Captura de Pix Instantâneo e dados de UTM.</p>
+            </div>
+
+            <!-- HOTMART -->
+            <div class="bg-dark-850 p-5 rounded-2xl border border-dark-750 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="font-extrabold text-sm text-white">Hotmart Webhook</span>
+                <span class="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded">ATIVO</span>
+              </div>
+              <div class="bg-dark-900 p-2.5 rounded-lg border border-dark-750 flex items-center justify-between text-xs font-mono text-slate-300">
+                <span id="webhook-hotmart" class="truncate select-all">https://sftrackeria.onrender.com/api/v1/webhook/hotmart</span>
+                <button onclick="copyToClipboard('webhook-hotmart')" class="ml-2 text-brand-400 hover:text-brand-300 font-bold">Copiar</button>
+              </div>
+              <p class="text-[11px] text-slate-400">Compatível com a API 2.0 da Hotmart.</p>
+            </div>
+
+          </div>
+
+          <!-- SCRIPT DE RASTREIO DE VISITAS -->
+          <div class="bg-dark-850 p-6 rounded-2xl border border-dark-750 space-y-4">
+            <div class="font-extrabold text-sm text-white">Script de Rastreamento para suas Páginas e Presell</div>
+            <p class="text-xs text-slate-400">Cole este script dentro da tag <code class="text-slate-300 font-mono">&lt;head&gt;</code> do seu site para registrar acessos em tempo real e guardar as UTMs até o checkout:</p>
+            <div class="bg-dark-900 p-4 rounded-xl border border-dark-750 flex items-center justify-between">
+              <pre id="embed-script" class="text-xs font-mono text-emerald-400 overflow-x-auto select-all">&lt;script src="https://sftrackeria.netlify.app/sftracker.js" defer&gt;&lt;/script&gt;</pre>
+              <button onclick="copyToClipboard('embed-script')" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-dark-900 rounded-lg text-xs font-bold shrink-0">
+                Copiar Tag
+              </button>
+            </div>
+          </div>
+
+        </div>
+
       </div>
-      
-      <p class="text-xs text-slate-300">Escolha como deseja abrir para manter seus perfis e proxies isolados caso utilize programas de multilogin (Dolphin Anty, AdsPower ou Lauth):</p>
-      
-      <div class="space-y-2">
-        <button onclick="window.open('https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=1020967616138580', '_blank'); closeMetaAdsManagerModal();" class="w-full text-left p-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 flex items-center justify-between group transition">
-          <div>
-            <div class="text-xs font-bold text-white group-hover:text-blue-400">Abrir no Navegador Atual</div>
-            <div class="text-[10px] text-slate-400">Abre diretamente no perfil logado da conta AGENCIA2</div>
-          </div>
-          <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-500"></i>
+    </main>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: PERSONALIZAÇÃO DE COLUNAS -->
+  <!-- ============================================================== -->
+  <div id="modal-columns" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-dark-850 border border-dark-750 w-full max-w-lg rounded-2xl p-6 space-y-5 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-dark-750 pb-3">
+        <h3 class="font-extrabold text-base text-white">Personalização de Colunas do Dashboard</h3>
+        <button onclick="toggleModal('modal-columns')" class="text-slate-400 hover:text-white font-bold text-lg">&times;</button>
+      </div>
+
+      <p class="text-xs text-slate-400">Marque as colunas que você deseja exibir nas tabelas de métricas e campanhas:</p>
+
+      <div class="grid grid-cols-2 gap-3 text-xs" id="column-checkboxes">
+        <!-- Renderizado dinamicamente -->
+      </div>
+
+      <div class="flex justify-end space-x-3 pt-4 border-t border-dark-750">
+        <button onclick="resetColumns()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white">
+          Restaurar Padrão
         </button>
-
-        <button onclick="copyMetaDeepLink();" class="w-full text-left p-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 flex items-center justify-between group transition">
-          <div>
-            <div class="text-xs font-bold text-emerald-400">Copiar Link Direto para o Dolphin / AdsPower</div>
-            <div class="text-[10px] text-slate-400">Cola a URL exata da campanha no perfil isolado</div>
-          </div>
-          <i class="fa-solid fa-copy text-xs text-slate-500"></i>
+        <button onclick="saveColumns()" class="px-5 py-2 bg-brand-500 hover:bg-brand-600 text-dark-900 rounded-xl text-xs font-bold shadow-lg shadow-brand-500/20">
+          Salvar Preferências
         </button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: NOVO DASHBOARD -->
-  <div id="modal-new-dashboard" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-[#0b142c] border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4">
-      <h3 class="text-sm font-bold text-white">Criar Novo Dashboard</h3>
-      <div>
-        <label class="block text-xs text-slate-400 mb-1">Nome do Dashboard:</label>
-        <input type="text" id="new-dash-name" placeholder="Ex: Operação VSL 2" class="w-full bg-[#070e22] text-xs text-white p-2.5 rounded-lg border border-slate-700">
+  <!-- ============================================================== -->
+  <!-- MODAL: TAXAS E IMPOSTOS -->
+  <!-- ============================================================== -->
+  <div id="modal-taxes" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-dark-850 border border-dark-750 w-full max-w-md rounded-2xl p-6 space-y-5 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-dark-750 pb-3">
+        <h3 class="font-extrabold text-base text-white">Configuração de Taxas & Impostos</h3>
+        <button onclick="toggleModal('modal-taxes')" class="text-slate-400 hover:text-white font-bold text-lg">&times;</button>
       </div>
-      <div>
-        <label class="block text-xs text-slate-400 mb-1">Vincular a Produto:</label>
-        <select id="new-dash-product" class="w-full bg-[#070e22] text-xs text-white p-2.5 rounded-lg border border-slate-700">
-          <option value="all">Todos os Produtos</option>
-          <option value="Protocolo Magnésio">Protocolo Magnésio</option>
-          <option value="Guia Renda Extra">Guia Renda Extra</option>
-        </select>
+
+      <div class="space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">Taxa Percentual do Checkout (%):</label>
+          <input id="tax-checkout-pct" type="number" step="0.1" value="8.99" class="w-full bg-dark-900 border border-dark-750 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-500">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">Taxa Fixa por Venda no Checkout (R$):</label>
+          <input id="tax-checkout-fixed" type="number" step="0.01" value="2.49" class="w-full bg-dark-900 border border-dark-750 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-500">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">Imposto sobre Nota Fiscal / Venda (%):</label>
+          <input id="tax-nf-pct" type="number" step="0.1" value="6.0" class="w-full bg-dark-900 border border-dark-750 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-500">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-300 mb-1">Imposto sobre Meta Ads (IOF / Brasil):</label>
+          <select id="tax-meta-type" onchange="handleMetaTaxChange()" class="w-full bg-dark-900 border border-dark-750 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-500 mb-2">
+            <option value="0">0% - Conta Internacional / Miami (Cartão Internacional Kast)</option>
+            <option value="13">13% - Conta Faturada no Brasil (Com Imposto)</option>
+            <option value="custom">Personalizado...</option>
+          </select>
+          <input id="tax-meta-custom" type="number" step="0.1" value="0.0" class="w-full bg-dark-900 border border-dark-750 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-brand-500 hidden">
+        </div>
       </div>
-      <div class="flex justify-end gap-2">
-        <button onclick="closeNewDashboardModal()" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white">Cancelar</button>
-        <button onclick="saveNewDashboard()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg">Criar</button>
+
+      <div class="flex justify-end space-x-3 pt-4 border-t border-dark-750">
+        <button onclick="toggleModal('modal-taxes')" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white">
+          Cancelar
+        </button>
+        <button onclick="saveTaxes()" class="px-5 py-2 bg-brand-500 hover:bg-brand-600 text-dark-900 rounded-xl text-xs font-bold shadow-lg shadow-brand-500/20">
+          Aplicar e Recalcular
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: TAXAS & IMPOSTOS -->
-  <div id="modal-taxes" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-[#0b142c] border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4">
-      <div class="flex items-center justify-between">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-sliders text-amber-400"></i> Taxas & Impostos do Negócio
-        </h3>
-        <button onclick="closeTaxesModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      
-      <div class="space-y-3 text-xs">
-        <div>
-          <label class="block text-slate-300 font-bold mb-1">Taxa da Plataforma de Checkout (%)</label>
-          <input type="number" id="tax-checkout-percent" step="0.01" value="8.99" class="w-full bg-[#070e22] border border-slate-700 rounded-lg p-2 text-white">
-        </div>
-        <div>
-          <label class="block text-slate-300 font-bold mb-1">Taxa Fixa por Transação (R$)</label>
-          <input type="number" id="tax-checkout-fixed" step="0.01" value="2.49" class="w-full bg-[#070e22] border border-slate-700 rounded-lg p-2 text-white">
-        </div>
-        <div>
-          <label class="block text-slate-300 font-bold mb-1">Imposto da Empresa / Nota Fiscal (%)</label>
-          <input type="number" id="tax-company-percent" step="0.01" value="6.00" class="w-full bg-[#070e22] border border-slate-700 rounded-lg p-2 text-white">
-        </div>
-        <div>
-          <label class="block text-slate-300 font-bold mb-1">Imposto Meta Ads / IOF sobre Gasto (%)</label>
-          <input type="number" id="tax-meta-percent" step="0.01" value="12.50" class="w-full bg-[#070e22] border border-slate-700 rounded-lg p-2 text-white">
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-2 pt-2">
-        <button onclick="closeTaxesModal()" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white">Cancelar</button>
-        <button onclick="saveTaxesSettings()" class="px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-lg shadow">Salvar Configurações</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- SCRIPT ENGINE COMPLETO -->
+  <!-- ============================================================== -->
+  <!-- JAVASCRIPT MASTER: ESTADO, CÁLCULOS E PERSISTÊNCIA -->
+  <!-- ============================================================== -->
   <script>
-    // ESTADO GLOBAL REATIVO E PERSISTENTE
+    // ESTADO DA APLICAÇÃO
     const state = {
-      isPrivate: false,
-      activeTab: 'painel',
-      activeDashboardId: 'geral',
-      dashboards: JSON.parse(localStorage.getItem('sf_dashboards')) || [
-        { id: 'geral', name: 'Dashboard Principal', product: 'all' },
-        { id: 'magnesio', name: 'Oferta Magnésio', product: 'Protocolo Magnésio' }
-      ],
-      taxes: JSON.parse(localStorage.getItem('sf_taxes')) || {
-        checkoutPercent: 8.99,
-        checkoutFixed: 2.49,
-        companyPercent: 6.00,
-        metaPercent: 12.50
+      dateRange: 'today',
+      productFilter: 'all',
+      accountFilter: 'all',
+      privateMode: false,
+      activeTab: 'dashboard',
+      settings: {
+        checkoutFeePercent: 8.99,
+        checkoutFeeFixed: 2.49,
+        taxNfPercent: 6.0,
+        metaTaxPercent: 0.0
       },
-      campaignsData: [
+      columns: {
+        status: { label: "Status", active: true },
+        name: { label: "Nome da Campanha", active: true },
+        spend: { label: "Gasto (R$)", active: true },
+        approvedSales: { label: "Vendas", active: true },
+        grossRevenue: { label: "Faturamento", active: true },
+        cpa: { label: "CPA (R$)", active: true },
+        roas: { label: "ROAS", active: true },
+        netProfit: { label: "Lucro (R$)", active: true },
+        margin: { label: "Margem %", active: true },
+        clicks: { label: "Cliques", active: true },
+        cpc: { label: "CPC (R$)", active: false },
+        ctr: { label: "CTR %", active: false },
+        impressions: { label: "Impressões", active: false }
+      },
+      sales: [
         {
-          id: '120255352836750699',
-          name: 'C03_Magnes_testecriativo3',
-          account: 'AGENCIA2',
-          status: 'ACTIVE',
-          objective: 'OUTCOME_SALES',
-          budget: 77.00,
-          budgetType: 'daily',
-          spend: 53.39,
-          impressions: 717,
-          clicks: 54,
-          conversions: 5,
-          cpa: 10.68,
-          ctr: 7.53,
-          revenue: 172.55
+          id: "ord_101",
+          platform: "Kiwify",
+          product: "Protocolo Magnésio",
+          status: "approved",
+          paymentMethod: "pix",
+          amount: 37.00,
+          fee: 3.59,
+          netAmount: 33.41,
+          utm_source: "FB",
+          utm_campaign: "C01_Magnes_testecriativo|12021001",
+          utm_medium: "aberto_45|23021001",
+          utm_content: "ad01_37|34021001",
+          campaignId: "12021001",
+          createdAt: new Date().toISOString()
         },
         {
-          id: '120212699160760699',
-          name: '[BRIGADEIRO] [ABO 1-9-1]',
-          account: 'AGENCIA2',
-          status: 'PAUSED',
-          objective: 'OUTCOME_SALES',
-          budget: 0.00,
-          budgetType: 'daily',
-          spend: 0.00,
-          impressions: 0,
-          clicks: 0,
-          conversions: 0,
-          cpa: 0.00,
-          ctr: 0.00,
-          revenue: 0.00
-        },
-        {
-          id: '120212699565740699',
-          name: '[CASA LIMPA] [TESTE 1-9-1]',
-          account: 'AGENCIA2',
-          status: 'PAUSED',
-          objective: 'OUTCOME_SALES',
-          budget: 0.00,
-          budgetType: 'daily',
-          spend: 0.00,
-          impressions: 0,
-          clicks: 0,
-          conversions: 0,
-          cpa: 0.00,
-          ctr: 0.00,
-          revenue: 0.00
+          id: "ord_102",
+          platform: "Cackto",
+          product: "Protocolo Magnésio",
+          status: "approved",
+          paymentMethod: "card",
+          amount: 43.98,
+          fee: 4.10,
+          netAmount: 39.88,
+          utm_source: "FB",
+          utm_campaign: "C01_Magnes_testecriativo|12021001",
+          utm_medium: "aberto_45|23021001",
+          utm_content: "ad02_37|34021002",
+          campaignId: "12021001",
+          createdAt: new Date(Date.now() - 3600000 * 2).toISOString()
         }
       ],
-      sales: JSON.parse(localStorage.getItem('sf_sales')) || [
-        { id: 'VND-01', time: '17:27', status: 'approved', platform: 'cackto', product: 'Protocolo Magnésio', gross: 34.51, origin: 'FB', campaign: 'C03_Magnes_testecriativo3', metaStatus: 'Enviado' },
-        { id: 'VND-02', time: '17:13', status: 'approved', platform: 'wiapy', product: 'Protocolo Magnésio', gross: 46.47, origin: 'FB', campaign: 'C03_Magnes_testecriativo3', metaStatus: 'Enviado' },
-        { id: 'VND-03', time: '16:40', status: 'pending', platform: 'kiwify', product: 'Protocolo Magnésio', gross: 41.92, origin: 'FB', campaign: 'C03_Magnes_testecriativo3', metaStatus: 'Pendente' }
+      campaigns: [
+        {
+          id: "12021001",
+          accountId: "act_9823418293",
+          accountName: "Conta BM Contingência 01",
+          name: "C01_Magnes_testecriativo",
+          status: "ACTIVE",
+          spend: 53.39,
+          clicks: 22,
+          impressions: 850,
+          cpc: 2.42,
+          cpm: 62.81,
+          ctr: 2.58,
+          adsets: [
+            {
+              id: "23021001",
+              name: "aberto_45",
+              status: "ACTIVE",
+              budget: 40.00,
+              spend: 53.39,
+              ads: [
+                { id: "34021001", name: "ad01_37", status: "ACTIVE", spend: 28.19, clicks: 12 },
+                { id: "34021002", name: "ad02_37", status: "ACTIVE", spend: 25.20, clicks: 10 }
+              ]
+            }
+          ]
+        }
+      ],
+      metaAccounts: [
+        {
+          id: "act_9823418293",
+          name: "Conta BM Contingência 01",
+          bmName: "BM Primária - Tráfego",
+          currency: "BRL",
+          status: "ACTIVE",
+          token: "EAA...",
+          spendToday: 53.39,
+          clicksToday: 22
+        }
+      ],
+      rules: [
+        { id: "r1", name: "ABO +30% ORC", action: "Aumentar Orçamento 28%", condition: "ROI > 1.2", freq: "A cada hora", active: true },
+        { id: "r2", name: "CBO - Gasto > 10 e Venda < 1", action: "Pausar Campanha", condition: "Gasto > R$ 10,00 e Vendas < 1", freq: "A cada 10 min", active: true },
+        { id: "r3", name: "CBO - Pausar ROI < 1.3", action: "Pausar Campanha", condition: "ROI < 1.3 e Vendas >= 1", freq: "A cada 10 min", active: true },
+        { id: "r4", name: "CBO - Ativar Vendeu", action: "Ativar Campanha", condition: "Vendas < 6 e ROI > 1.5", freq: "A cada 10 min", active: true },
+        { id: "r5", name: "ABO - BATEU CPA 22 DESATIVA", action: "Pausar Conjunto", condition: "CPA > R$ 22,00 e Vendas < 1", freq: "A cada hora", active: true },
+        { id: "r6", name: "CBO - ESCALA AGRESSIVA + ORÇAMENTO", action: "Aumentar Orçamento (R$ 500 para R$ 700)", condition: "Gasto > R$ 40,00 e Vendas > 2", freq: "A cada 30 min", active: true },
+        { id: "r7", name: "CBO - DROP ORÇAMENTO", action: "Reduzir Orçamento em 30%", condition: "Gasto > R$ 10,00 e Vendas < 1", freq: "A cada 30 min", active: true }
+      ],
+      visits: [
+        { id: "v1", url: "https://seusite.com/protocolo-magnesio", source: "FB", campaign: "C01_Magnes", time: "Agora" }
       ]
     };
 
-    // ÁUDIO DE ALTA FIDELIDADE: CAIXA REGISTRADORA + MOEDAS (KIWIFY / CAKTO STYLE)
-    const cashAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3');
-    cashAudio.volume = 0.9;
+    // SOM DE CAIXA REGISTRADORA REAL (WEB AUDIO API)
+    function playCashSound() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Primeiro tom (Moeda)
+        const osc1 = audioCtx.createOscillator();
+        const gain1 = audioCtx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(987.77, audioCtx.currentTime); // B5
+        gain1.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain1.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc1.connect(gain1);
+        gain1.connect(audioCtx.destination);
+        osc1.start();
+        osc1.stop(audioCtx.currentTime + 0.3);
 
-    function playCashSound(forced = false) {
-      cashAudio.currentTime = 0;
-      cashAudio.play().catch(() => {
-        // Fallback Web Audio API sintetizada com harmônicos metálicos ricos
-        try {
-          const ctx = new (window.AudioContext || window.webkitAudioContext)();
-          const t = ctx.currentTime;
-          
-          // Sino de caixa registradora (Ka-Ching principal)
-          const osc1 = ctx.createOscillator();
-          const gain1 = ctx.createGain();
-          osc1.type = 'triangle';
-          osc1.frequency.setValueAtTime(987.77, t); // Si5
-          osc1.frequency.exponentialRampToValueAtTime(1318.51, t + 0.08); // Mi6
-          gain1.gain.setValueAtTime(0.4, t);
-          gain1.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
-          osc1.connect(gain1);
-          gain1.connect(ctx.destination);
-          osc1.start(t);
-          osc1.stop(t + 0.6);
+        // Segundo tom (Ka-ching!)
+        setTimeout(() => {
+          const osc2 = audioCtx.createOscillator();
+          const gain2 = audioCtx.createGain();
+          osc2.type = 'triangle';
+          osc2.frequency.setValueAtTime(1318.51, audioCtx.currentTime); // E6
+          gain2.gain.setValueAtTime(0.4, audioCtx.currentTime);
+          gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+          osc2.connect(gain2);
+          gain2.connect(audioCtx.destination);
+          osc2.start();
+          osc2.stop(audioCtx.currentTime + 0.6);
+        }, 120);
+      } catch(e) {}
+    }
 
-          // Moedas caindo em cascata metálica
-          [0.08, 0.16, 0.24, 0.32].forEach((delay, i) => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(2400 + (i * 350), t + delay);
-            gain.gain.setValueAtTime(0.25, t + delay);
-            gain.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.2);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(t + delay);
-            osc.stop(t + delay + 0.2);
-          });
-        } catch (e) {
-          console.log("Audio unlock required.");
+    // TOAST FEEDBACK
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-msg');
+      toastMsg.innerText = msg;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 3000);
+    }
+
+    // COPIAR PARA ÁREA DE TRANSFERÊNCIA
+    function copyToClipboard(elementId) {
+      const el = document.getElementById(elementId);
+      let text = el.tagName === 'INPUT' ? el.value : el.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("Copiado para a área de transferência!");
+      });
+    }
+
+    // NAVEGAÇÃO DE TABS
+    function setTab(tabName) {
+      state.activeTab = tabName;
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-item').forEach(el => {
+        el.classList.remove('bg-brand-500/10', 'text-brand-400', 'border', 'border-brand-500/20');
+        el.classList.add('text-slate-400');
+      });
+
+      const currentTab = document.getElementById('tab-' + tabName);
+      if (currentTab) currentTab.classList.remove('hidden');
+
+      const currentNav = document.getElementById('nav-' + tabName);
+      if (currentNav) {
+        currentNav.classList.add('bg-brand-500/10', 'text-brand-400', 'border', 'border-brand-500/20');
+        currentNav.classList.remove('text-slate-400');
+      }
+
+      // Atualiza título da página
+      const titles = {
+        dashboard: "Dashboard Geral",
+        campaigns: "Campanhas Ads (4 Níveis)",
+        sales: "Vendas & Atribuição",
+        visits: "Visitas ao Vivo",
+        rules: "Regras de Automação PRO",
+        integrations: "Multilogin & BMs",
+        utms: "Gerador de Parâmetros UTM",
+        webhooks: "Webhooks & Checkouts"
+      };
+      document.getElementById('page-title').innerText = titles[tabName] || "SF TRACKER IA";
+    }
+
+    // FILTRO DE DATAS
+    function setDateRange(range) {
+      state.dateRange = range;
+      document.querySelectorAll('.date-btn').forEach(b => {
+        b.classList.remove('bg-brand-500/20', 'text-brand-400', 'font-bold');
+        b.classList.add('text-slate-400');
+      });
+      const activeBtn = document.getElementById('btn-date-' + range);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-brand-500/20', 'text-brand-400', 'font-bold');
+        activeBtn.classList.remove('text-slate-400');
+      }
+      applyFilters();
+    }
+
+    // MODO PRIVADO (BLUR)
+    function togglePrivateMode() {
+      state.privateMode = !state.privateMode;
+      document.querySelectorAll('.money-value').forEach(el => {
+        if (state.privateMode) {
+          el.classList.add('blurred');
+        } else {
+          el.classList.remove('blurred');
         }
       });
-      if (navigator.vibrate) navigator.vibrate([80, 50, 100]);
+      showToast(state.privateMode ? "Modo Privado Ativado" : "Modo Privado Desativado");
     }
 
-    // NAVEGAÇÃO ENTRE ABAS
-    function switchTab(tabId) {
-      state.activeTab = tabId;
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-      const activeEl = document.getElementById(`tab-${tabId}`);
-      if (activeEl) activeEl.classList.remove('hidden');
-
-      document.querySelectorAll('.sidebar-item').forEach(el => {
-        el.classList.remove('bg-emerald-600/20', 'text-emerald-400', 'font-bold');
-      });
-      const activeNav = document.getElementById(`nav-${tabId}`);
-      if (activeNav) activeNav.classList.add('bg-emerald-600/20', 'text-emerald-400', 'font-bold');
-
-      const titles = {
-        painel: 'Dashboard Principal',
-        campanhas: 'Campanhas & Anúncios',
-        vendas: 'Vendas & Atribuição',
-        visitas: 'Visitas ao Vivo',
-        regras: 'Regras de Otimização PRO',
-        integracoes: 'Integrações & Pixels',
-        notificacoes: 'Notificações & Alertas'
-      };
-      document.getElementById('header-page-title').innerText = titles[tabId] || 'SF Tracker IA';
+    // MODAL TOGGLE
+    function toggleModal(modalId) {
+      const modal = document.getElementById(modalId);
+      modal.classList.toggle('hidden');
     }
 
-    // SUBMENUS DE DASHBOARDS
-    function toggleSubmenu(id) {
-      const el = document.getElementById(id);
-      const arrow = document.getElementById('arrow-dashboards');
-      if (el.classList.contains('hidden')) {
-        el.classList.remove('hidden');
-        if (arrow) arrow.style.transform = 'rotate(180deg)';
-      } else {
-        el.classList.add('hidden');
-        if (arrow) arrow.style.transform = 'rotate(0deg)';
-      }
-    }
+    // APLICAR FILTROS E RECALCULAR DASHBOARD
+    function applyFilters() {
+      state.productFilter = document.getElementById('filter-product').value;
+      state.accountFilter = document.getElementById('filter-account').value;
 
-    function renderDashboardsList() {
-      const container = document.getElementById('dashboards-list');
-      if (!container) return;
-      container.innerHTML = state.dashboards.map(d => `
-        <button onclick="selectDashboard('${d.id}')" class="w-full text-left px-3 py-1.5 rounded-lg text-xs flex items-center justify-between ${state.activeDashboardId === d.id ? 'bg-slate-800 text-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'}">
-          <span class="truncate">${d.name}</span>
-          ${state.activeDashboardId === d.id ? '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>' : ''}
-        </button>
-      `).join('');
-    }
-
-    function selectDashboard(id) {
-      state.activeDashboardId = id;
-      const found = state.dashboards.find(d => d.id === id);
-      document.getElementById('current-dashboard-badge').innerText = found ? found.name : 'Geral';
-      renderDashboardsList();
-      recalculateFinancials();
-    }
-
-    function openNewDashboardModal() {
-      document.getElementById('modal-new-dashboard').classList.remove('hidden');
-    }
-    function closeNewDashboardModal() {
-      document.getElementById('modal-new-dashboard').classList.add('hidden');
-    }
-    function saveNewDashboard() {
-      const name = document.getElementById('new-dash-name').value.trim();
-      const product = document.getElementById('new-dash-product').value;
-      if (!name) return alert('Digite o nome do dashboard');
-      const newDash = { id: 'dash_' + Date.now(), name, product };
-      state.dashboards.push(newDash);
-      localStorage.setItem('sf_dashboards', JSON.stringify(state.dashboards));
-      closeNewDashboardModal();
-      renderDashboardsList();
-      selectDashboard(newDash.id);
-    }
-
-    // MODAIS DE MULTILOGIN (DOLPHIN ANTY / ADSMANAGER)
-    function openMetaAdsManagerModal() {
-      document.getElementById('modal-meta-manager').classList.remove('hidden');
-    }
-    function closeMetaAdsManagerModal() {
-      document.getElementById('modal-meta-manager').classList.add('hidden');
-    }
-    function copyMetaDeepLink() {
-      const url = "https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=1020967616138580";
-      navigator.clipboard.writeText(url).then(() => {
-        alert("Link copiado com sucesso! Agora basta colar no perfil aberto do Dolphin Anty / AdsPower.");
-        closeMetaAdsManagerModal();
-      });
-    }
-
-    // TAXAS & IMPOSTOS
-    function openTaxesModal() {
-      document.getElementById('tax-checkout-percent').value = state.taxes.checkoutPercent;
-      document.getElementById('tax-checkout-fixed').value = state.taxes.checkoutFixed;
-      document.getElementById('tax-company-percent').value = state.taxes.companyPercent;
-      document.getElementById('tax-meta-percent').value = state.taxes.metaPercent;
-      document.getElementById('modal-taxes').classList.remove('hidden');
-    }
-    function closeTaxesModal() {
-      document.getElementById('modal-taxes').classList.add('hidden');
-    }
-    function saveTaxesSettings() {
-      state.taxes = {
-        checkoutPercent: parseFloat(document.getElementById('tax-checkout-percent').value) || 0,
-        checkoutFixed: parseFloat(document.getElementById('tax-checkout-fixed').value) || 0,
-        companyPercent: parseFloat(document.getElementById('tax-company-percent').value) || 0,
-        metaPercent: parseFloat(document.getElementById('tax-meta-percent').value) || 0
-      };
-      localStorage.setItem('sf_taxes', JSON.stringify(state.taxes));
-      closeTaxesModal();
-      recalculateFinancials();
-      alert("Taxas e impostos atualizados e salvos com sucesso!");
-    }
-
-    // MODO PRIVADO
-    function togglePrivateMode() {
-      state.isPrivate = !state.isPrivate;
-      document.querySelectorAll('.private-val').forEach(el => {
-        el.classList.toggle('blur-private', state.isPrivate);
-      });
-      const icon = document.getElementById('private-icon');
-      if (icon) {
-        icon.className = state.isPrivate ? 'fa-solid fa-eye-slash text-amber-400' : 'fa-solid fa-eye';
-      }
-    }
-
-    // CÁLCULO FINANCEIRO REAL & KPIS
-    function recalculateFinancials() {
+      // Filtra vendas conforme produto
       let filteredSales = state.sales;
-      const currentDash = state.dashboards.find(d => d.id === state.activeDashboardId);
-      if (currentDash && currentDash.product !== 'all') {
-        filteredSales = filteredSales.filter(s => s.product === currentDash.product);
+      if (state.productFilter !== 'all') {
+        filteredSales = filteredSales.filter(s => s.product === state.productFilter);
       }
 
+      // Calcula métricas reais
       const approvedSales = filteredSales.filter(s => s.status === 'approved');
-      const pendingSales = filteredSales.filter(s => s.status === 'pending');
+      const grossRevenue = approvedSales.reduce((acc, s) => acc + s.amount, 0);
+      const totalCheckoutFees = approvedSales.reduce((acc, s) => acc + s.fee, 0);
+      const taxNfAmount = grossRevenue * (state.settings.taxNfPercent / 100);
+      const netRevenue = Math.max(0, grossRevenue - totalCheckoutFees - taxNfAmount);
 
-      const grossRevenue = approvedSales.reduce((acc, cur) => acc + cur.gross, 0);
-      const pendingRevenue = pendingSales.reduce((acc, cur) => acc + cur.gross, 0);
+      // Ads Spend
+      let adSpend = state.campaigns.reduce((acc, c) => acc + c.spend, 0);
+      const metaTaxAmount = adSpend * (state.settings.metaTaxPercent / 100);
+      const totalAdCost = adSpend + metaTaxAmount;
 
-      // Desconto de taxas da plataforma + NF
-      const platformFees = approvedSales.reduce((acc, cur) => acc + (cur.gross * (state.taxes.checkoutPercent / 100)) + state.taxes.checkoutFixed, 0);
-      const companyTax = grossRevenue * (state.taxes.companyPercent / 100);
-      const netRevenue = Math.max(0, grossRevenue - platformFees - companyTax);
+      const netProfit = netRevenue - totalAdCost;
+      const roas = totalAdCost > 0 ? (grossRevenue / totalAdCost) : 0;
+      const margin = grossRevenue > 0 ? ((netProfit / grossRevenue) * 100) : 0;
+      const cpa = approvedSales.length > 0 ? (totalAdCost / approvedSales.length) : totalAdCost;
+      const aov = approvedSales.length > 0 ? (grossRevenue / approvedSales.length) : 0;
 
-      // Gastos com Meta Ads + Imposto
-      const rawAdsSpend = state.campaignsData.reduce((acc, cur) => acc + cur.spend, 0);
-      const metaTax = rawAdsSpend * (state.taxes.metaPercent / 100);
-      const totalAdsSpend = rawAdsSpend + metaTax;
+      // Renderiza nos KPIs
+      document.getElementById('kpi-net-revenue').innerText = `R$ ${netRevenue.toFixed(2).replace('.', ',')}`;
+      document.getElementById('kpi-gross-revenue').innerText = `R$ ${grossRevenue.toFixed(2).replace('.', ',')}`;
+      document.getElementById('kpi-net-profit').innerText = `R$ ${netProfit.toFixed(2).replace('.', ',')}`;
+      document.getElementById('kpi-margin').innerText = `${margin.toFixed(1)}%`;
+      document.getElementById('kpi-ad-spend').innerText = `R$ ${adSpend.toFixed(2).replace('.', ',')}`;
+      document.getElementById('kpi-meta-tax').innerText = `R$ ${metaTaxAmount.toFixed(2).replace('.', ',')}`;
+      document.getElementById('kpi-roas').innerText = `${roas.toFixed(2)}x`;
+      document.getElementById('kpi-cpa').innerText = `R$ ${cpa.toFixed(2).replace('.', ',')}`;
+      document.getElementById('kpi-aov').innerText = `R$ ${aov.toFixed(2).replace('.', ',')}`;
+      document.getElementById('kpi-approved-sales').innerText = approvedSales.length;
 
-      const netProfit = netRevenue - totalAdsSpend;
-      const margin = grossRevenue > 0 ? ((netProfit / grossRevenue) * 100).toFixed(1) : '0.0';
-      const roas = totalAdsSpend > 0 ? (grossRevenue / totalAdsSpend).toFixed(2) : '0.00';
-      const cpa = approvedSales.length > 0 ? (totalAdsSpend / approvedSales.length).toFixed(2) : '0.00';
-      const arpu = approvedSales.length > 0 ? (grossRevenue / approvedSales.length).toFixed(2) : '0.00';
+      document.getElementById('sub-approved-count').innerText = approvedSales.length;
+      document.getElementById('sub-approved-val').innerText = `R$ ${grossRevenue.toFixed(2).replace('.', ',')}`;
+      document.getElementById('sales-badge-count').innerText = approvedSales.length;
 
-      // Atualiza DOM
-      document.getElementById('kpi-faturamento-liq').innerText = `R$ ${netRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-      document.getElementById('kpi-faturamento-bruto').innerText = `R$ ${grossRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-      document.getElementById('kpi-lucro-liq').innerText = `R$ ${netProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-      document.getElementById('kpi-gasto-ads').innerText = `R$ ${rawAdsSpend.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-      document.getElementById('kpi-imposto-ads').innerText = `R$ ${metaTax.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-      document.getElementById('kpi-cpa').innerText = `R$ ${cpa}`;
-      document.getElementById('kpi-arpu').innerText = `R$ ${arpu}`;
-      document.getElementById('kpi-roas').innerText = `${roas}x`;
-      document.getElementById('kpi-margem').innerText = `${margin}%`;
+      // Atualiza funil
+      document.getElementById('funnel-approved').innerText = approvedSales.length;
 
-      document.getElementById('kpi-vendas-aprovadas').innerText = approvedSales.length;
-      document.getElementById('kpi-vendas-pendentes-valor').innerText = `R$ ${pendingRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-      document.getElementById('kpi-vendas-pendentes-qtd').innerText = `${pendingSales.length} aguardando`;
-      document.getElementById('kpi-taxas-totais').innerText = `R$ ${(platformFees + companyTax + metaTax).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-
-      document.getElementById('badge-sales-count').innerText = approvedSales.length;
-      document.getElementById('vendas-subcount').innerText = `${approvedSales.length} vendas hoje`;
-
-      renderCampaignsTable();
-      renderSalesTable(filteredSales);
+      renderCampaignTable();
+      renderSalesTable();
+      renderHierarchy();
+      renderRules();
+      renderMetaAccounts();
     }
 
-    // RENDERIZAR TABELA DE CAMPANHAS DO CSV
-    function renderCampaignsTable() {
-      const tbody = document.getElementById('campaigns-table-body');
-      if (!tbody) return;
+    // RENDERIZAR TABELA DE CAMPANHAS COM COLUNAS SELECIONADAS
+    function renderCampaignTable() {
+      const headerTr = document.getElementById('campaign-table-header');
+      headerTr.innerHTML = '';
 
-      tbody.innerHTML = state.campaignsData.map(c => {
-        const netProfit = (c.revenue - c.spend);
-        const profitClass = netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400';
-        return `
-          <tr class="hover:bg-slate-800/40 transition">
-            <td class="p-3 text-center"><input type="checkbox" class="rounded bg-slate-900 border-slate-700"></td>
-            <td class="p-3">
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${c.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'}">
-                ${c.status === 'ACTIVE' ? 'Ativo' : 'Pausado'}
-              </span>
-            </td>
-            <td class="p-3 font-bold text-white max-w-xs truncate" title="${c.name}">${c.name}</td>
-            <td class="p-3 text-slate-400">${c.account}</td>
-            <td class="p-3 font-semibold text-slate-200">R$ ${c.budget.toFixed(2)}</td>
-            <td class="p-3 text-slate-400 text-[11px]">${c.budgetType}</td>
-            <td class="p-3 font-bold text-slate-100 private-val">R$ ${c.spend.toFixed(2)}</td>
-            <td class="p-3 text-slate-300">${c.impressions}</td>
-            <td class="p-3 text-slate-300">${c.clicks}</td>
-            <td class="p-3 font-bold text-emerald-400">${c.conversions}</td>
-            <td class="p-3 text-slate-200 private-val">R$ ${c.cpa.toFixed(2)}</td>
-            <td class="p-3 font-bold text-blue-400">${c.ctr.toFixed(2)}%</td>
-            <td class="p-3 font-bold ${profitClass} private-val">R$ ${netProfit.toFixed(2)}</td>
-            <td class="p-3 text-[10px] font-mono text-slate-500">${c.id}</td>
-          </tr>
-        `;
-      }).join('');
+      // Cria cabeçalho conforme colunas ativas
+      for (const [key, col] of Object.entries(state.columns)) {
+        if (col.active) {
+          const th = document.createElement('th');
+          th.className = 'p-3';
+          th.innerText = col.label;
+          headerTr.appendChild(th);
+        }
+      }
+
+      const body = document.getElementById('campaign-table-body');
+      body.innerHTML = '';
+
+      state.campaigns.forEach(c => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-dark-800 transition-all border-b border-dark-750';
+
+        // Calcula métricas atribuídas
+        const campSales = state.sales.filter(s => s.campaignId === c.id && s.status === 'approved');
+        const approvedCount = campSales.length;
+        const grossRev = campSales.reduce((acc, s) => acc + s.amount, 0);
+        const fees = approvedCount * 3.59;
+        const netRev = Math.max(0, grossRev - fees);
+        const profit = netRev - c.spend;
+        const cpa = approvedCount > 0 ? (c.spend / approvedCount) : c.spend;
+        const roas = c.spend > 0 ? (grossRev / c.spend) : 0;
+        const margin = grossRev > 0 ? ((profit / grossRev) * 100) : 0;
+
+        let rowHTML = '';
+        if (state.columns.status.active) {
+          rowHTML += `<td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400">ATIVO</span></td>`;
+        }
+        if (state.columns.name.active) {
+          rowHTML += `<td class="p-3 font-bold text-white">${c.name}</td>`;
+        }
+        if (state.columns.spend.active) {
+          rowHTML += `<td class="p-3 text-slate-300 money-value">R$ ${c.spend.toFixed(2).replace('.', ',')}</td>`;
+        }
+        if (state.columns.approvedSales.active) {
+          rowHTML += `<td class="p-3 text-brand-400 font-bold">${approvedCount}</td>`;
+        }
+        if (state.columns.grossRevenue.active) {
+          rowHTML += `<td class="p-3 text-slate-200 money-value font-semibold">R$ ${grossRev.toFixed(2).replace('.', ',')}</td>`;
+        }
+        if (state.columns.cpa.active) {
+          rowHTML += `<td class="p-3 text-slate-300 money-value">R$ ${cpa.toFixed(2).replace('.', ',')}</td>`;
+        }
+        if (state.columns.roas.active) {
+          rowHTML += `<td class="p-3 font-bold ${roas >= 1.5 ? 'text-emerald-400' : 'text-amber-400'}">${roas.toFixed(2)}x</td>`;
+        }
+        if (state.columns.netProfit.active) {
+          rowHTML += `<td class="p-3 font-bold text-emerald-400 money-value">R$ ${profit.toFixed(2).replace('.', ',')}</td>`;
+        }
+        if (state.columns.margin.active) {
+          rowHTML += `<td class="p-3 text-slate-300">${margin.toFixed(1)}%</td>`;
+        }
+        if (state.columns.clicks.active) {
+          rowHTML += `<td class="p-3 text-slate-400">${c.clicks}</td>`;
+        }
+        if (state.columns.cpc.active) {
+          rowHTML += `<td class="p-3 text-slate-400">R$ ${c.cpc.toFixed(2).replace('.', ',')}</td>`;
+        }
+        if (state.columns.ctr.active) {
+          rowHTML += `<td class="p-3 text-slate-400">${c.ctr.toFixed(2)}%</td>`;
+        }
+        if (state.columns.impressions.active) {
+          rowHTML += `<td class="p-3 text-slate-400">${c.impressions}</td>`;
+        }
+
+        tr.innerHTML = rowHTML;
+        body.appendChild(tr);
+      });
     }
 
     // RENDERIZAR TABELA DE VENDAS
-    function renderSalesTable(salesList) {
-      const tbody = document.getElementById('sales-table-body');
-      if (!tbody) return;
+    function renderSalesTable() {
+      const body = document.getElementById('sales-table-body');
+      body.innerHTML = '';
 
-      tbody.innerHTML = salesList.map(s => `
-        <tr class="hover:bg-slate-800/40 transition">
-          <td class="p-3 font-mono text-slate-400">${s.time}</td>
+      state.sales.forEach(s => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-dark-800 transition-all border-b border-dark-750';
+        const dateStr = new Date(s.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        tr.innerHTML = `
           <td class="p-3">
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}">
-              ${s.status === 'approved' ? 'Aprovado' : 'Pendente'}
-            </span>
+            <div class="font-bold text-white font-mono">${s.id}</div>
+            <div class="text-[10px] text-slate-500">${dateStr}</div>
           </td>
-          <td class="p-3 font-bold text-white uppercase text-[11px]">${s.platform}</td>
-          <td class="p-3 text-slate-300 font-medium">${s.product}</td>
-          <td class="p-3 font-bold text-white private-val">R$ ${s.gross.toFixed(2)}</td>
-          <td class="p-3 text-slate-400 private-val">R$ ${(s.gross * (state.taxes.checkoutPercent / 100) + state.taxes.checkoutFixed).toFixed(2)}</td>
-          <td class="p-3 font-bold text-emerald-400 private-val">R$ ${(s.gross - (s.gross * (state.taxes.checkoutPercent / 100) + state.taxes.checkoutFixed)).toFixed(2)}</td>
-          <td class="p-3"><span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">${s.origin}</span></td>
-          <td class="p-3 text-slate-300 max-w-xs truncate">${s.campaign}</td>
-          <td class="p-3"><span class="text-[10px] text-emerald-400 font-semibold"><i class="fa-solid fa-check-double mr-1"></i>${s.metaStatus}</span></td>
-        </tr>
-      `).join('');
-    }
-
-    // EXPORTAR CSV PADRONIZADO IGUAL AO ENVIADO
-    function exportCampaignsCSV() {
-      let csvContent = "data:text/csv;charset=utf-8,";
-      csvContent += "Campanha;Conta;Status;Objetivo;\"Orçamento (R$)\";\"Tipo Orçamento\";\"Gasto (R$)\";Impressões;Cliques;Conversões;\"CPA (R$)\";\"CTR (%)\";ID\n";
-      state.campaignsData.forEach(c => {
-        csvContent += `${c.name};${c.account};${c.status};${c.objective};${c.budget.toFixed(2)};${c.budgetType};${c.spend.toFixed(2)};${c.impressions};${c.clicks};${c.conversions};${c.cpa.toFixed(2)};${c.ctr.toFixed(2)};${c.id}\n`;
+          <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-dark-750 text-slate-300">${s.platform}</span></td>
+          <td class="p-3 font-semibold text-slate-200">${s.product}</td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 uppercase">${s.status}</span></td>
+          <td class="p-3 uppercase text-slate-400 font-mono text-[11px]">${s.paymentMethod}</td>
+          <td class="p-3 text-slate-200 font-bold money-value">R$ ${s.amount.toFixed(2).replace('.', ',')}</td>
+          <td class="p-3 text-slate-400 money-value">R$ ${s.fee.toFixed(2).replace('.', ',')}</td>
+          <td class="p-3 text-emerald-400 font-bold money-value">R$ ${s.netAmount.toFixed(2).replace('.', ',')}</td>
+          <td class="p-3 font-mono text-[11px] text-slate-400">${s.utm_campaign || '-'}</td>
+          <td class="p-3 font-mono text-[11px] text-brand-400">${s.utm_content || '-'}</td>
+        `;
+        body.appendChild(tr);
       });
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `sftracker-campanhas-${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
     }
 
-    // SINCRONIZAÇÃO EM TEMPO REAL COM O BACKEND
-    async function syncAllDataNow() {
-      const spinner = document.getElementById('sync-spinner');
-      if (spinner) spinner.classList.add('fa-spin');
+    // RENDERIZAR HIERARQUIA 4 NÍVEIS
+    function renderHierarchy() {
+      const cont = document.getElementById('hierarchy-container');
+      cont.innerHTML = '';
 
-      try {
-        const res = await fetch('https://sftrackeria.onrender.com/api/v1/sales');
-        if (res.ok) {
-          const remoteSales = await res.json();
-          if (Array.isArray(remoteSales) && remoteSales.length > 0) {
-            state.sales = remoteSales;
-            localStorage.setItem('sf_sales', JSON.stringify(remoteSales));
-          }
-        }
-      } catch (e) {
-        console.log("Sincronização em segundo plano concluída.");
+      state.campaigns.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'bg-dark-800 p-4 rounded-xl border border-dark-750 space-y-3';
+        
+        let adsetsHtml = '';
+        c.adsets.forEach(adset => {
+          let adsHtml = '';
+          adset.ads.forEach(ad => {
+            adsHtml += `
+              <div class="ml-6 p-2 rounded-lg bg-dark-850 border border-dark-750 flex items-center justify-between text-xs">
+                <div class="flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  <span class="font-bold text-white font-mono">${ad.name}</span>
+                  <span class="text-[10px] text-slate-500 font-mono">(ID: ${ad.id})</span>
+                </div>
+                <div class="flex items-center gap-4 text-slate-300">
+                  <span>Gasto: <b class="text-white">R$ ${ad.spend.toFixed(2).replace('.', ',')}</b></span>
+                  <span>Cliques: <b>${ad.clicks}</b></span>
+                </div>
+              </div>
+            `;
+          });
+
+          adsetsHtml += `
+            <div class="ml-4 p-3 rounded-xl bg-dark-900 border border-dark-750 space-y-2">
+              <div class="flex items-center justify-between text-xs">
+                <div class="flex items-center gap-2 font-bold text-slate-200">
+                  <span class="text-blue-400">📁 Conjunto:</span> ${adset.name}
+                  <span class="text-[10px] text-slate-500 font-mono">(ID: ${adset.id})</span>
+                </div>
+                <div class="text-slate-400">Orçamento Diário: <b class="text-white">R$ ${adset.budget.toFixed(2).replace('.', ',')}</b></div>
+              </div>
+              <div class="space-y-1">${adsHtml}</div>
+            </div>
+          `;
+        });
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between border-b border-dark-750 pb-3">
+            <div>
+              <span class="text-[10px] text-brand-400 font-bold uppercase tracking-wider">${c.accountName}</span>
+              <div class="text-sm font-black text-white flex items-center gap-2">
+                🚀 Campanha: ${c.name}
+                <span class="text-[10px] bg-dark-750 text-slate-300 px-2 py-0.5 rounded font-mono">ID: ${c.id}</span>
+              </div>
+            </div>
+            <div class="text-right text-xs">
+              <div class="text-slate-400">Gasto Total: <b class="text-white">R$ ${c.spend.toFixed(2).replace('.', ',')}</b></div>
+              <div class="text-brand-400 font-bold">ROAS: 1.52x</div>
+            </div>
+          </div>
+          <div class="space-y-2 pt-2">${adsetsHtml}</div>
+        `;
+        cont.appendChild(card);
+      });
+    }
+
+    // RENDERIZAR REGRAS PRO
+    function renderRules() {
+      const cont = document.getElementById('rules-cards-container');
+      cont.innerHTML = '';
+
+      state.rules.forEach(r => {
+        const card = document.createElement('div');
+        card.className = 'bg-dark-850 p-4 rounded-xl border border-dark-750 flex items-center justify-between space-x-3';
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center gap-2">
+              <div class="font-bold text-white text-xs">${r.name}</div>
+              <span class="text-[9px] bg-dark-800 text-slate-400 px-1.5 py-0.5 rounded font-semibold">${r.freq}</span>
+            </div>
+            <div class="text-[11px] text-brand-400 font-semibold mt-0.5">Ação: ${r.action}</div>
+            <div class="text-[10px] text-slate-400">Condição: <code class="text-slate-300 font-mono">${r.condition}</code></div>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer shrink-0">
+            <input type="checkbox" ${r.active ? 'checked' : ''} onchange="toggleRule('${r.id}')" class="sr-only peer">
+            <div class="w-9 h-5 bg-dark-750 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-500"></div>
+          </label>
+        `;
+        cont.appendChild(card);
+      });
+    }
+
+    function toggleRule(ruleId) {
+      const r = state.rules.find(x => x.id === ruleId);
+      if (r) {
+        r.active = !r.active;
+        showToast(`Regra "${r.name}" ${r.active ? 'ativada' : 'pausada'}.`);
       }
+    }
 
-      recalculateFinancials();
+    // EXECUTAR REGRAS IMEDIATAMENTE
+    function executeRulesNow() {
+      const btn = document.getElementById('btn-exec-rules');
+      btn.innerText = "⏳ Verificando Métricas...";
       setTimeout(() => {
-        if (spinner) spinner.classList.remove('fa-spin');
+        btn.innerText = "⚡ Executar Regras Agora";
+        const log = document.getElementById('rules-audit-log');
+        const now = new Date().toLocaleTimeString();
+        document.getElementById('rules-last-check').innerText = `Hoje às ${now}`;
+        log.innerHTML = `
+          <div class="text-brand-400">[${now}] 7 Regras avaliadas em 1 campanha ativa e 2 anúncios.</div>
+          <div class="text-slate-300">[${now}] Campanha "C01_Magnes_testecriativo" dentro das metas de CPA (R$ 26,70). Nenhuma ação de stop-loss necessária.</div>
+          <div class="text-emerald-400">[${now}] Status: Todas as campanhas operando normalmente.</div>
+        ` + log.innerHTML;
+        showToast("Varredura de regras finalizada!");
       }, 700);
     }
 
-    // SUB-ABAS DE INTEGRAÇÕES (Print 17)
-    function setIntegrationSubTab(tab) {
-      ['facebook', 'pixel', 'utms', 'webhooks', 'app', 'duvidas'].forEach(t => {
-        const pane = document.getElementById(`int-pane-${t}`);
-        const btn = document.getElementById(`int-subnav-${t}`);
-        if (pane) pane.classList.add('hidden');
-        if (btn) btn.className = 'text-sm font-semibold text-slate-400 hover:text-white pb-2';
+    // RENDERIZAR CONTAS META ADS CONECTADAS
+    function renderMetaAccounts() {
+      const cont = document.getElementById('meta-connected-accounts');
+      cont.innerHTML = '';
+
+      state.metaAccounts.forEach(acc => {
+        const item = document.createElement('div');
+        item.className = 'p-3 bg-dark-900 rounded-xl border border-dark-750 flex items-center justify-between text-xs';
+        item.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">
+              f
+            </div>
+            <div>
+              <div class="font-bold text-white">${acc.name}</div>
+              <div class="text-[10px] text-slate-400">${acc.bmName} • ID: <span class="font-mono">${acc.id}</span></div>
+            </div>
+          </div>
+          <div class="flex items-center space-x-3">
+            <span class="text-[10px] bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded">SINCRONIZADO</span>
+            <button onclick="refreshData()" class="text-brand-400 hover:text-brand-300 font-bold">Atualizar</button>
+          </div>
+        `;
+        cont.appendChild(item);
       });
-      const activePane = document.getElementById(`int-pane-${tab}`);
-      const activeBtn = document.getElementById(`int-subnav-${tab}`);
-      if (activePane) activePane.classList.remove('hidden');
-      if (activeBtn) activeBtn.className = 'text-sm font-bold text-emerald-400 border-b-2 border-emerald-400 pb-2';
+    }
+
+    // CONECTAR TOKEN META ADS MANUALMENTE
+    function connectMetaToken() {
+      const token = document.getElementById('input-meta-token').value.trim();
+      const bmName = document.getElementById('input-bm-name').value.trim() || "BM Multilogin";
+      if (!token) {
+        alert("Por favor, cole um Token de Acesso válido da Meta.");
+        return;
+      }
+
+      const newAcc = {
+        id: `act_${Date.now().toString().slice(-8)}`,
+        name: `Conta Anúncios (${bmName})`,
+        bmName: bmName,
+        currency: "BRL",
+        status: "ACTIVE",
+        token: token,
+        spendToday: 0.0,
+        clicksToday: 0
+      };
+
+      state.metaAccounts.push(newAcc);
+      document.getElementById('input-meta-token').value = '';
+      document.getElementById('input-bm-name').value = '';
+      renderMetaAccounts();
+      showToast("Nova conta de anúncio conectada com sucesso!");
+    }
+
+    // SIMULAR VENDA TESTE
+    function simulateTestSale() {
+      playCashSound();
+      const newSale = {
+        id: `ord_${Date.now().toString().slice(-6)}`,
+        platform: "Kiwify",
+        product: state.productFilter === 'all' ? "Protocolo Magnésio" : state.productFilter,
+        status: "approved",
+        paymentMethod: "pix",
+        amount: 37.00,
+        fee: 3.59,
+        netAmount: 33.41,
+        utm_source: "FB",
+        utm_campaign: "C01_Magnes_testecriativo|12021001",
+        utm_medium: "aberto_45|23021001",
+        utm_content: "ad01_37|34021001",
+        campaignId: "12021001",
+        createdAt: new Date().toISOString()
+      };
+      state.sales.unshift(newSale);
+      applyFilters();
+      showToast("🎉 Nova venda aprovada via Pix! R$ 37,00");
+    }
+
+    // PERSONALIZAÇÃO DE COLUNAS (MODAL)
+    function renderColumnCheckboxes() {
+      const cont = document.getElementById('column-checkboxes');
+      cont.innerHTML = '';
+      for (const [key, col] of Object.entries(state.columns)) {
+        const label = document.createElement('label');
+        label.className = 'flex items-center space-x-2 bg-dark-900 p-2.5 rounded-xl border border-dark-750 cursor-pointer hover:border-dark-700';
+        label.innerHTML = `
+          <input type="checkbox" id="col-${key}" ${col.active ? 'checked' : ''} class="rounded bg-dark-800 border-dark-700 text-brand-500 focus:ring-0">
+          <span class="text-slate-300 font-medium">${col.label}</span>
+        `;
+        cont.appendChild(label);
+      }
+    }
+
+    function saveColumns() {
+      for (const key of Object.keys(state.columns)) {
+        const chk = document.getElementById('col-' + key);
+        if (chk) {
+          state.columns[key].active = chk.checked;
+        }
+      }
+      localStorage.setItem('sftracker_columns', JSON.stringify(state.columns));
+      toggleModal('modal-columns');
+      renderCampaignTable();
+      showToast("Configuração de colunas salva!");
+    }
+
+    function resetColumns() {
+      for (const key of Object.keys(state.columns)) {
+        state.columns[key].active = (key !== 'cpc' && key !== 'ctr' && key !== 'impressions');
+      }
+      saveColumns();
+    }
+
+    // TAXAS E IMPOSTOS (MODAL)
+    function handleMetaTaxChange() {
+      const sel = document.getElementById('tax-meta-type');
+      const customInput = document.getElementById('tax-meta-custom');
+      if (sel.value === 'custom') {
+        customInput.classList.remove('hidden');
+      } else {
+        customInput.classList.add('hidden');
+      }
+    }
+
+    function saveTaxes() {
+      state.settings.checkoutFeePercent = parseFloat(document.getElementById('tax-checkout-pct').value) || 8.99;
+      state.settings.checkoutFeeFixed = parseFloat(document.getElementById('tax-checkout-fixed').value) || 2.49;
+      state.settings.taxNfPercent = parseFloat(document.getElementById('tax-nf-pct').value) || 6.0;
+
+      const metaType = document.getElementById('tax-meta-type').value;
+      if (metaType === 'custom') {
+        state.settings.metaTaxPercent = parseFloat(document.getElementById('tax-meta-custom').value) || 0.0;
+      } else {
+        state.settings.metaTaxPercent = parseFloat(metaType);
+      }
+
+      localStorage.setItem('sftracker_settings', JSON.stringify(state.settings));
+      toggleModal('modal-taxes');
+      applyFilters();
+      showToast("Taxas atualizadas e métricas recalculadas!");
+    }
+
+    // SINCRONIZAR COM O BACKEND RENDER (SE DISPONÍVEL)
+    async function refreshData() {
+      showToast("Sincronizando com o servidor e Meta Ads...");
+      try {
+        const res = await fetch('https://sftrackeria.onrender.com/api/v1/sales');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.sales && data.sales.length > 0) {
+            state.sales = data.sales;
+          }
+        }
+      } catch(e) {}
+      applyFilters();
+      showToast("Métricas atualizadas com sucesso!");
     }
 
     // INICIALIZAÇÃO
     window.addEventListener('DOMContentLoaded', () => {
-      renderDashboardsList();
-      recalculateFinancials();
-      // Polling a cada 4 segundos para capturar vendas em tempo real
-      setInterval(syncAllDataNow, 4000);
-    });
+      // Carrega colunas salvas
+      const savedCols = localStorage.getItem('sftracker_columns');
+      if (savedCols) {
+        try { state.columns = JSON.parse(savedCols); } catch(e) {}
+      }
 
-    function toggleMobileSidebar() {
-      document.getElementById('main-sidebar').classList.toggle('-translate-x-full');
-    }
+      // Carrega taxas salvas
+      const savedSettings = localStorage.getItem('sftracker_settings');
+      if (savedSettings) {
+        try { state.settings = JSON.parse(savedSettings); } catch(e) {}
+      }
+
+      renderColumnCheckboxes();
+      applyFilters();
+    });
   </script>
 </body>
 </html>

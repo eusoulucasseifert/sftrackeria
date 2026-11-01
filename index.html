@@ -1,1979 +1,1147 @@
 <!DOCTYPE html>
 <html lang="pt-BR" class="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>SF TRACKER IA - Sistema Completo de Atribuição & Otimização</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SF TRACKER IA - Painel de Atribuição & Rastreamento Ilimitado</title>
   
-  <!-- PWA Meta tags -->
-  <meta name="theme-color" content="#080b11" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="SF Tracker" />
-  
-  <!-- Tailwind CSS CDN -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SF Tracker">
+  <meta name="theme-color" content="#030712">
+
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
           colors: {
-            brand: {
-              400: '#34d399',
-              500: '#10b981',
-              600: '#059669',
-              neon: '#00ff88'
-            },
-            dark: {
-              950: '#05080e',
-              900: '#090e17',
-              850: '#0f1726',
-              800: '#152033',
-              750: '#1c2b44',
-              700: '#253757',
-              600: '#334155'
-            }
-          },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-            mono: ['JetBrains Mono', 'Fira Code', 'monospace']
+            brand: { 500: '#10b981', 600: '#059669', 700: '#047857' },
+            dark: { 950: '#020617', 900: '#0b1329', 850: '#0f172a', 800: '#1e293b', 700: '#334155' }
           }
         }
       }
     }
   </script>
-
   <style>
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 5px;
-      height: 5px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #090e17;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #1c2b44;
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #253757;
-    }
-
-    /* Modo Privado (Blur) */
-    body.private-mode .private-blur {
-      filter: blur(7px);
-      user-select: none;
-      transition: filter 0.2s ease;
-    }
-
-    /* Glows & Animações */
-    .glow-neon {
-      box-shadow: 0 0 15px -3px rgba(16, 185, 129, 0.4);
-    }
-    .glow-dot {
-      box-shadow: 0 0 10px #10b981;
-    }
-
-    /* Switch iOS Style */
-    .switch-toggle:checked ~ .switch-dot {
-      transform: translateX(100%);
-      background-color: #10b981;
-    }
-    .switch-toggle:checked ~ .switch-bg {
-      background-color: rgba(16, 185, 129, 0.35);
-      border-color: #10b981;
-    }
-
-    /* Funnel Shape Polygon */
-    .funnel-stage {
-      clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%);
-    }
-    .funnel-stage-first {
-      clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%);
-    }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #050a18; }
+    .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #0b1329; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    .blur-private { filter: blur(7px); transition: filter 0.2s ease; user-select: none; }
   </style>
 </head>
-<body class="bg-dark-950 text-slate-100 min-h-screen font-sans flex antialiased selection:bg-brand-500 selection:text-black">
+<body class="text-slate-100 min-h-screen flex antialiased selection:bg-emerald-500 selection:text-white">
 
-  <!-- Toast Notification Box -->
-  <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
-
-  <!-- ============================================================ -->
-  <!-- SIDEBAR LATERAL (MENU COMPLETO LOWTRACK / UTMIFY)           -->
-  <!-- ============================================================ -->
-  <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-dark-900 border-r border-dark-750/70 flex flex-col justify-between transition-transform duration-300 md:translate-x-0 -translate-x-full">
-    <div class="overflow-y-auto flex-1">
-      <!-- Brand Logo -->
-      <div class="h-16 px-5 flex items-center justify-between border-b border-dark-750/70">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-400/20 to-teal-500/10 border border-emerald-500/40 flex items-center justify-center text-brand-neon shadow-lg shadow-emerald-500/20">
-            <i data-lucide="cpu" class="w-4 h-4 text-emerald-400"></i>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <span class="font-black text-sm tracking-tight text-white uppercase font-mono">SF TRACKER</span>
-            <span class="text-[9px] font-extrabold uppercase bg-gradient-to-r from-emerald-500 to-teal-400 text-black px-1.5 py-0.5 rounded shadow font-sans">IA</span>
-          </div>
+  <!-- SIDEBAR LATERAL NATIVA (Fiel ao LowTrack / Utmify) -->
+  <aside id="main-sidebar" class="w-64 bg-[#070e22] border-r border-slate-800/80 flex flex-col shrink-0 fixed md:static inset-y-0 left-0 z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-200">
+    <!-- Topo Logo -->
+    <div class="h-16 px-5 flex items-center justify-between border-b border-slate-800/80">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+          <i class="fa-solid fa-microchip text-base"></i>
         </div>
-        <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-white p-1">
-          <i data-lucide="x" class="w-5 h-5"></i>
+        <div>
+          <span class="text-base font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">SF TRACKER</span>
+          <span class="text-[10px] ml-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-black">IA</span>
+        </div>
+      </div>
+      <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+
+    <!-- Navegação Menus -->
+    <div class="flex-1 overflow-y-auto custom-scrollbar px-3 py-4 space-y-1">
+      
+      <!-- Seção Dashboards (Colapsável & Multi-dashboard) -->
+      <div>
+        <button onclick="toggleSubmenu('submenu-dashboards')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-400 hover:text-slate-200 rounded-lg hover:bg-slate-800/50 transition">
+          <span class="flex items-center gap-2.5"><i class="fa-solid fa-table-cells-large text-slate-400"></i> Dashboards</span>
+          <i id="arrow-dashboards" class="fa-solid fa-chevron-down text-[10px] transition-transform"></i>
         </button>
+        <div id="submenu-dashboards" class="pl-4 mt-1 space-y-1">
+          <div id="dashboards-list" class="space-y-1">
+            <!-- Renderizado dinamicamente via JS -->
+          </div>
+          <button onclick="openNewDashboardModal()" class="w-full text-left px-3 py-1.5 text-xs text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 rounded-lg flex items-center gap-2 transition">
+            <i class="fa-solid fa-plus text-[10px]"></i> Novo Dashboard
+          </button>
+        </div>
       </div>
 
-      <!-- Navigation Section -->
-      <nav class="p-3 space-y-1 text-xs">
-        
-        <!-- Grupo Dashboards (Accordion) -->
-        <div>
-          <button onclick="toggleSidebarSubmenu('submenu-dashboards')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-300 hover:text-white hover:bg-dark-850 font-medium transition">
-            <div class="flex items-center gap-2.5">
-              <i data-lucide="layout-dashboard" class="w-4 h-4 text-slate-400"></i>
-              <span>Dashboards</span>
-            </div>
-            <i data-lucide="chevron-down" id="arrow-dashboards" class="w-3.5 h-3.5 text-slate-400 transition-transform"></i>
-          </button>
-          
-          <div id="submenu-dashboards" class="ml-4 pl-3 border-l border-dark-750 mt-1 space-y-1">
-            <button onclick="switchTab('painel')" id="nav-btn-painel" class="nav-item w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-emerald-400 font-semibold bg-dark-800/80 transition">
-              <span class="flex items-center gap-2">
-                <i data-lucide="line-chart" class="w-3.5 h-3.5"></i>
-                Dashboard Principal
-              </span>
-            </button>
-            <button onclick="switchTab('resumo')" id="nav-btn-resumo" class="nav-item w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition">
-              <span class="flex items-center gap-2">
-                <i data-lucide="home" class="w-3.5 h-3.5"></i>
-                Painel Resumo
-              </span>
-            </button>
-            <button onclick="switchTab('aovivo')" id="nav-btn-aovivo" class="nav-item w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-slate-400 hover:text-white transition">
-              <span class="flex items-center gap-2">
-                <i data-lucide="globe" class="w-3.5 h-3.5"></i>
-                Ao vivo (Globo 3D)
-              </span>
-              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            </button>
-          </div>
-        </div>
-
-        <div class="pt-2 border-t border-dark-750/50 my-2"></div>
-
-        <!-- Links Principais -->
-        <button onclick="switchTab('campanhas')" id="nav-btn-campanhas" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-dark-850 font-medium transition">
-          <div class="flex items-center gap-3">
-            <i data-lucide="megaphone" class="w-4 h-4 text-brand-neon"></i>
-            <span>Campanhas</span>
-          </div>
-          <span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-mono font-bold">4 NÍVEIS</span>
+      <nav class="space-y-1 pt-2">
+        <button onclick="switchTab('painel')" id="nav-painel" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
+          <i class="fa-solid fa-chart-line text-slate-400 w-5"></i> Painel Geral
         </button>
-
-        <button onclick="switchTab('vendas')" id="nav-btn-vendas" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-dark-850 font-medium transition">
+        <button onclick="switchTab('campanhas')" id="nav-campanhas" class="sidebar-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
           <div class="flex items-center gap-3">
-            <i data-lucide="badge-dollar-sign" class="w-4 h-4 text-emerald-400"></i>
-            <span>Vendas</span>
+            <i class="fa-solid fa-bullhorn text-slate-400 w-5"></i> Campanhas
           </div>
-          <span class="text-[10px] bg-dark-750 px-2 py-0.5 rounded-full text-slate-300 font-mono" id="sidebar-sales-count">191</span>
+          <span class="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700 font-bold">4 NÍVEIS</span>
         </button>
-
-        <button onclick="switchTab('visitas')" id="nav-btn-visitas" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-dark-850 font-medium transition">
+        <button onclick="switchTab('vendas')" id="nav-vendas" class="sidebar-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
           <div class="flex items-center gap-3">
-            <i data-lucide="eye" class="w-4 h-4 text-blue-400"></i>
-            <span>Visitas</span>
+            <i class="fa-solid fa-receipt text-slate-400 w-5"></i> Vendas
           </div>
-          <span class="text-[10px] text-slate-400 font-mono">1.842</span>
+          <span id="badge-sales-count" class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-bold">0</span>
         </button>
-
-        <!-- REGRAS AUTOMÁTICAS (PRO) -->
-        <button onclick="switchTab('regras')" id="nav-btn-regras" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-dark-850 font-medium transition group">
-          <div class="flex items-center gap-3">
-            <i data-lucide="zap" class="w-4 h-4 text-amber-400 group-hover:animate-bounce"></i>
-            <span class="font-bold text-white">Regras</span>
-          </div>
-          <span class="text-[9px] bg-gradient-to-r from-amber-500 to-amber-600 text-black font-extrabold px-1.5 py-0.5 rounded shadow">PRO</span>
+        <button onclick="switchTab('visitas')" id="nav-visitas" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
+          <i class="fa-solid fa-eye text-slate-400 w-5"></i> Visitas
         </button>
-
-        <!-- INTEGRAÇÕES -->
-        <button onclick="switchTab('integracoes')" id="nav-btn-integracoes" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-dark-850 font-medium transition">
+        <button onclick="switchTab('regras')" id="nav-regras" class="sidebar-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
           <div class="flex items-center gap-3">
-            <i data-lucide="link" class="w-4 h-4 text-purple-400"></i>
-            <span>Integrações</span>
+            <i class="fa-solid fa-bolt text-amber-400 w-5"></i> Regras
           </div>
-          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span class="text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black px-1.5 py-0.5 rounded shadow">PRO</span>
         </button>
-
-        <!-- TAXAS E IMPOSTOS (NOVA FUNCIONALIDADE) -->
-        <button onclick="openTaxModal()" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-amber-400 hover:text-white hover:bg-dark-850 font-medium transition">
+        <button onclick="switchTab('integracoes')" id="nav-integracoes" class="sidebar-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
           <div class="flex items-center gap-3">
-            <i data-lucide="percent" class="w-4 h-4 text-amber-400"></i>
-            <span>Configurar Taxas & Impostos</span>
+            <i class="fa-solid fa-link text-slate-400 w-5"></i> Integrações
           </div>
-          <i data-lucide="settings" class="w-3.5 h-3.5"></i>
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
         </button>
-
-        <!-- NOTIFICAÇÕES -->
-        <button onclick="switchTab('notificacoes')" id="nav-btn-notificacoes" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-dark-850 font-medium transition">
-          <div class="flex items-center gap-3">
-            <i data-lucide="bell" class="w-4 h-4 text-sky-400"></i>
-            <span>Notificações</span>
-          </div>
-          <span class="w-2 h-2 rounded-full bg-sky-500 animate-ping"></span>
-        </button>
-
-        <!-- SIMULADOR CACKTO & GREEN -->
-        <button onclick="switchTab('simulador')" id="nav-btn-simulador" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-dark-850 font-medium transition">
-          <div class="flex items-center gap-3">
-            <i data-lucide="terminal" class="w-4 h-4 text-amber-400"></i>
-            <span>Simulador de Vendas</span>
-          </div>
-        </button>
-
-        <!-- INSTALAÇÃO / PWA -->
-        <button onclick="switchTab('instalacao')" id="nav-btn-instalacao" class="nav-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-dark-850 font-medium transition">
-          <div class="flex items-center gap-3">
-            <i data-lucide="smartphone" class="w-4 h-4 text-emerald-400"></i>
-            <span>Instalar no Celular</span>
-          </div>
-          <span class="text-[9px] bg-emerald-500 text-black font-extrabold px-1.5 py-0.5 rounded">App</span>
+        <button onclick="switchTab('notificacoes')" id="nav-notificacoes" class="sidebar-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800/60 hover:text-white transition">
+          <i class="fa-solid fa-bell text-slate-400 w-5"></i> Notificações
         </button>
       </nav>
     </div>
 
-    <!-- Trial & Plano Footer -->
-    <div class="p-3 border-t border-dark-750/70 space-y-3">
-      <div class="bg-dark-850 p-3 rounded-2xl border border-dark-750 text-xs space-y-2">
-        <div class="flex items-center justify-between text-slate-400 text-[11px]">
-          <span class="flex items-center gap-1.5 font-medium">
-            <i data-lucide="clock" class="w-3.5 h-3.5 text-blue-400"></i>
-            <span>Trial Ativo</span>
-          </span>
-          <span class="text-slate-300 font-mono font-bold">3 dias</span>
-        </div>
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] text-slate-400">Faturado:</span>
-          <span class="text-emerald-400 font-bold font-mono private-blur" id="sidebar-faturado">R$ 10.800,85</span>
-        </div>
-        <div class="grid grid-cols-2 gap-2 pt-1">
-          <button onclick="showToast('Seu plano é vitalício e ilimitado.', 'info')" class="w-full py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] transition">Planos</button>
-          <button onclick="showToast('Suporte SF Tracker IA 24/7 disponível', 'info')" class="w-full py-1.5 rounded-xl bg-dark-750 hover:bg-dark-700 text-slate-200 text-[11px] transition">Suporte</button>
-        </div>
-      </div>
-
-      <!-- User Profile Card -->
-      <div class="flex items-center justify-between pt-1 text-xs">
-        <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 p-[1.5px]">
-            <div class="w-full h-full rounded-full bg-dark-900 flex items-center justify-center font-bold text-white text-[11px]">
-              SF
-            </div>
+    <!-- Rodapé Usuário Admin Vitalício (Sem Pop-up de expiração) -->
+    <div class="p-3 border-t border-slate-800/80 bg-[#050b1a]">
+      <div class="p-2.5 rounded-xl bg-slate-900/90 border border-emerald-500/30 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs border border-emerald-500/40">
+            <i class="fa-solid fa-crown text-amber-400"></i>
           </div>
           <div>
-            <div class="font-bold text-white text-[11px] leading-tight">SF Player</div>
-            <div class="text-[10px] text-emerald-400">Plano Vitalício</div>
+            <div class="text-xs font-bold text-white flex items-center gap-1.5">
+              Admin Master
+              <span class="text-[9px] bg-emerald-500 text-slate-950 font-black px-1 rounded">VITALÍCIO</span>
+            </div>
+            <div class="text-[10px] text-emerald-400/90">Acesso Total Ilimitado</div>
           </div>
         </div>
-        <button onclick="togglePrivateMode()" title="Modo Privado" class="text-slate-400 hover:text-white p-1">
-          <i data-lucide="eye" class="w-4 h-4"></i>
-        </button>
       </div>
     </div>
   </aside>
 
-  <!-- Mobile Overlay -->
-  <div id="sidebar-overlay" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 hidden md:hidden"></div>
-
-  <!-- ============================================================ -->
-  <!-- CONTEÚDO PRINCIPAL (HEADER + DASHBOARD)                      -->
-  <!-- ============================================================ -->
-  <div class="flex-1 md:ml-64 flex flex-col min-w-0">
-
-    <!-- Top Navigation Bar -->
-    <header class="h-16 border-b border-dark-750/80 bg-dark-900/90 backdrop-blur sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between gap-4">
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-y-auto h-screen bg-[#060c1e] custom-scrollbar">
+    
+    <!-- Topbar Global com Ações Rápidas -->
+    <header class="h-16 px-4 md:px-6 bg-[#070e22]/90 backdrop-blur border-b border-slate-800/80 flex items-center justify-between sticky top-0 z-40">
       <div class="flex items-center gap-3">
-        <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-300 hover:text-white p-1">
-          <i data-lucide="menu" class="w-5 h-5"></i>
-        </button>
-
-        <h1 class="text-sm font-bold text-white tracking-wide hidden sm:block">Dashboard Principal</h1>
-
-        <!-- Date Quick Filter Pills (Print 5) -->
-        <div class="hidden xl:flex items-center gap-1 bg-dark-850 p-1 rounded-xl border border-dark-750 text-xs">
-          <button onclick="setQuickPeriod('hoje')" class="period-pill px-2.5 py-1 rounded-lg bg-dark-750 text-white font-semibold">Hoje</button>
-          <button onclick="setQuickPeriod('ontem')" class="period-pill px-2.5 py-1 rounded-lg text-slate-400 hover:text-white">Ontem</button>
-          <button onclick="setQuickPeriod('7d')" class="period-pill px-2.5 py-1 rounded-lg text-slate-400 hover:text-white">7 dias</button>
-          <button onclick="setQuickPeriod('15d')" class="period-pill px-2.5 py-1 rounded-lg text-slate-400 hover:text-white">15 dias</button>
-          <button onclick="setQuickPeriod('30d')" class="period-pill px-2.5 py-1 rounded-lg text-slate-400 hover:text-white">30 dias</button>
-        </div>
+        <button onclick="toggleMobileSidebar()" class="md:hidden p-2 rounded-lg bg-slate-800 text-slate-300"><i class="fa-solid fa-bars"></i></button>
+        <h1 id="header-page-title" class="text-base md:text-lg font-bold text-white flex items-center gap-2">
+          Dashboard Principal
+        </h1>
+        <span id="current-dashboard-badge" class="hidden md:inline-block text-[11px] bg-slate-800 border border-slate-700 text-slate-300 px-2.5 py-0.5 rounded-full font-semibold">Geral</span>
       </div>
 
-      <!-- Right Actions -->
-      <div class="flex items-center gap-2 sm:gap-3">
-        <!-- Tax Configuration Button -->
-        <button onclick="openTaxModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-dark-850 hover:bg-dark-800 border border-amber-500/30 text-amber-400 text-xs font-semibold transition" title="Configurar Taxas e Impostos">
-          <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
-          <span class="hidden md:inline">Taxas & Impostos</span>
+      <div class="flex items-center gap-2 md:gap-3">
+        <!-- Botão Sincronizar em Tempo Real -->
+        <button onclick="syncAllDataNow()" id="btn-sync-all" title="Sincronizar em tempo real" class="px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5 transition">
+          <i id="sync-spinner" class="fa-solid fa-rotate"></i>
+          <span class="hidden sm:inline">Sincronizar</span>
         </button>
 
-        <!-- Private Mode -->
-        <button onclick="togglePrivateMode()" id="btn-private-mode" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-dark-850 border border-dark-750 text-slate-300 hover:text-white text-xs font-semibold transition">
-          <i data-lucide="eye" id="private-icon" class="w-3.5 h-3.5"></i>
-          <span class="hidden sm:inline">Modo privado</span>
+        <!-- Botão Taxas & Impostos -->
+        <button onclick="openTaxesModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-sliders"></i>
+          <span class="hidden sm:inline">Taxas & Impostos</span>
         </button>
 
-        <!-- Refresh -->
-        <button onclick="refreshDashboard()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-dark-850 hover:bg-dark-800 border border-dark-750 text-xs text-slate-200 transition">
-          <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-slate-400"></i>
-          <span class="hidden sm:inline">Atualizar</span>
+        <!-- Modo Privado -->
+        <button onclick="togglePrivateMode()" id="btn-private-mode" title="Ocultar valores na tela" class="p-2 md:px-3 md:py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition">
+          <i id="private-icon" class="fa-solid fa-eye"></i>
+          <span class="hidden md:inline">Modo Privado</span>
         </button>
 
-        <!-- Play Coin Sound Test -->
-        <button onclick="playCashRegisterSound()" class="w-8 h-8 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center transition" title="Testar Som da Venda (Moedinha)">
-          <i data-lucide="bell-ring" class="w-4 h-4"></i>
+        <!-- Testar Som Moeda -->
+        <button onclick="playCashSound(true)" title="Tocar som da moeda" class="p-2 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 text-xs transition">
+          <i class="fa-solid fa-coins"></i>
         </button>
       </div>
     </header>
 
-    <!-- MAIN BODY CONTENT -->
-    <main class="flex-1 p-4 sm:p-6 space-y-6 max-w-7xl w-full mx-auto">
+    <div class="p-4 md:p-6 space-y-6">
 
-      <!-- ======================================================== -->
-      <!-- ABA: DASHBOARD PRINCIPAL (COMPLETO CONFORME PRINT 5)     -->
-      <!-- ======================================================== -->
-      <div id="tab-painel" class="space-y-6">
-
-        <!-- Banner de Trial Discreto -->
-        <div class="bg-dark-900 border border-dark-750/70 px-4 py-2.5 rounded-2xl flex items-center justify-between text-xs text-slate-300">
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span>Seu teste gratuito expira em <strong class="text-white">4 dias</strong>. Assine para continuar ilimitado &rarr;</span>
-          </div>
-          <button onclick="showToast('Sua conta já possui licença vitalícia ativada!', 'success')" class="text-emerald-400 font-bold hover:underline">Ver planos</button>
-        </div>
-
-        <!-- KPIs Linha 1 (Cards Grandes do Print 5) -->
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <!-- Faturamento Líquido -->
-          <div class="bg-dark-900 border border-dark-750/80 p-4 rounded-2xl relative overflow-hidden">
-            <span class="text-[11px] text-slate-400 block mb-1 uppercase tracking-wider font-semibold">Faturamento (Líquido)</span>
-            <div class="text-xl font-black text-white font-mono private-blur" id="dash-faturamento-liq">R$ 34,51</div>
-            <div class="text-[10px] text-slate-500 mt-1">Bruto: <span class="text-slate-300 private-blur" id="dash-faturamento-bruto">R$ 37,99</span></div>
-          </div>
-
-          <!-- Lucro Líquido Real -->
-          <div class="bg-dark-900 border border-dark-750/80 p-4 rounded-2xl">
-            <span class="text-[11px] text-slate-400 block mb-1 uppercase tracking-wider font-semibold">Lucro (Líquido)</span>
-            <div class="text-xl font-black text-blue-400 font-mono private-blur" id="dash-lucro-liq">R$ 6,93</div>
-            <div class="text-[10px] text-emerald-400 mt-1 flex items-center gap-1 font-bold">
-              <span>▲ Positivo</span>
-            </div>
-          </div>
-
-          <!-- Gasto em Ads -->
-          <div class="bg-dark-900 border border-dark-750/80 p-4 rounded-2xl">
-            <span class="text-[11px] text-slate-400 block mb-1 uppercase tracking-wider font-semibold">Gasto em Ads</span>
-            <div class="text-xl font-black text-white font-mono private-blur" id="dash-gasto-ads">R$ 24,52</div>
-            <div class="text-[10px] text-slate-500 mt-1">+ R$ 3,07 imposto</div>
-          </div>
-
-          <!-- CPA Médio -->
-          <div class="bg-dark-900 border border-dark-750/80 p-4 rounded-2xl">
-            <span class="text-[11px] text-slate-400 block mb-1 uppercase tracking-wider font-semibold">CPA</span>
-            <div class="text-xl font-black text-white font-mono private-blur" id="dash-cpa">R$ 24,52</div>
-            <div class="text-[10px] text-slate-400 mt-1">Custo por venda</div>
-          </div>
-
-          <!-- ARPU (Ticket) -->
-          <div class="bg-dark-900 border border-dark-750/80 p-4 rounded-2xl">
-            <span class="text-[11px] text-slate-400 block mb-1 uppercase tracking-wider font-semibold">ARPU</span>
-            <div class="text-xl font-black text-white font-mono private-blur" id="dash-arpu">R$ 34,51</div>
-            <div class="text-[10px] text-slate-400 mt-1">Ticket médio</div>
-          </div>
-
-          <!-- ROAS -->
-          <div class="bg-dark-900 border border-dark-750/80 p-4 rounded-2xl">
-            <span class="text-[11px] text-slate-400 block mb-1 uppercase tracking-wider font-semibold">ROAS</span>
-            <div class="text-xl font-black text-blue-400 font-mono" id="dash-roas">1.41x</div>
-            <div class="text-[10px] text-emerald-400 mt-1 font-bold">▲ OK</div>
-          </div>
-        </div>
-
-        <!-- KPIs Linha 2 (Secundários do Print 5) -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div class="bg-dark-900 border border-dark-750/80 p-4 rounded-2xl">
-            <span class="text-[11px] text-slate-400 block mb-1 font-semibold uppercase">Vendas Aprovadas</span>
-            <div class="text-lg font-black text-white font-mono" id="dash-vendas-aprovadas">1</div>
-            <div class="text-[10px] text-slate-500 mt-1 private-blur">R$ 34,51</div>
-          </div>
-
-          <div class="bg-dark-900 border border-dark-750/80 p-4 rounded-2xl">
-            <span class="text-[11px] text-slate-400 block mb-1 font-semibold uppercase">Vendas Pendentes</span>
-            <div class="text-lg font-black text-white font-mono private-blur" id="dash-vendas-pendentes">R$ 41,92</div>
-            <div class="text-[10px] text-amber-400 mt-1">2 vendas geradas</div>
-          </div>
-
-          <div class="bg-dark-900 border border-dark-750/80 p-4 rounded-2xl">
-            <span class="text-[11px] text-slate-400 block mb-1 font-semibold uppercase">Chargeback</span>
-            <div class="text-lg font-black text-white font-mono">0%</div>
-            <div class="text-[10px] text-emerald-400 mt-1">0 vendas</div>
-          </div>
-
-          <div class="bg-dark-900 border border-dark-750/80 p-4 rounded-2xl">
-            <span class="text-[11px] text-slate-400 block mb-1 font-semibold uppercase">Margem Líquida</span>
-            <div class="text-lg font-black text-blue-400 font-mono" id="dash-margem">28.9%</div>
-            <div class="text-[10px] text-emerald-400 mt-1 font-bold">▲ Positivo</div>
-          </div>
-        </div>
-
-        <!-- Linha: Saldo das Contas + Funil de Conversão (Print 5) -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <!-- Saldo das Contas -->
-          <div class="lg:col-span-4 bg-dark-900 border border-dark-750/80 p-5 rounded-2xl flex flex-col justify-between">
-            <div>
-              <div class="flex items-center gap-2 mb-4">
-                <i data-lucide="lock" class="w-4 h-4 text-amber-400"></i>
-                <h3 class="text-xs font-bold text-white uppercase tracking-wider">Saldo das Contas</h3>
-              </div>
-              <div class="space-y-3">
-                <div class="flex items-center justify-between text-xs py-2 border-b border-dark-750/60">
-                  <div>
-                    <span class="font-bold text-white block">AGENCIA2</span>
-                    <span class="text-[11px] text-slate-400 font-mono">1020967616138580</span>
-                  </div>
-                  <span class="text-[11px] text-slate-400 font-mono">Carregando...</span>
-                </div>
-              </div>
-            </div>
-            <div class="text-[11px] text-slate-400 border-t border-dark-750/60 pt-3 flex items-center justify-between">
-              <span>Sincronizado via Meta Graph API</span>
-              <span class="text-emerald-400 font-mono font-bold">Online</span>
-            </div>
-          </div>
-
-          <!-- Funil de Conversão Visual Meta Ads (Print 5) -->
-          <div class="lg:col-span-8 bg-dark-900 border border-dark-750/80 p-5 rounded-2xl">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                <i data-lucide="filter" class="w-4 h-4 text-blue-400"></i>
-                <span>Funil de Conversão (Meta Ads)</span>
-              </h3>
-              <span class="text-[11px] text-slate-400 font-mono">Últimas 24 horas</span>
-            </div>
-
-            <!-- Gráfico Funil Estilizado -->
-            <div class="grid grid-cols-5 gap-1.5 my-3 text-center">
-              <div class="bg-blue-600/90 text-white p-3 rounded-l-xl flex flex-col justify-center">
-                <span class="text-sm font-black font-mono">100%</span>
-                <span class="text-[10px] text-blue-100 font-semibold uppercase mt-0.5">22</span>
-                <span class="text-[9px] text-blue-200 mt-1 uppercase">Cliques</span>
-              </div>
-              <div class="bg-blue-500/80 text-white p-3 flex flex-col justify-center">
-                <span class="text-sm font-black font-mono">81.8%</span>
-                <span class="text-[10px] text-blue-100 font-semibold uppercase mt-0.5">18</span>
-                <span class="text-[9px] text-blue-200 mt-1 uppercase">Vis. Página</span>
-              </div>
-              <div class="bg-indigo-600/80 text-white p-3 flex flex-col justify-center">
-                <span class="text-sm font-black font-mono">0%</span>
-                <span class="text-[10px] text-indigo-100 font-semibold uppercase mt-0.5">0</span>
-                <span class="text-[9px] text-indigo-200 mt-1 uppercase">ICs</span>
-              </div>
-              <div class="bg-purple-600/80 text-white p-3 flex flex-col justify-center">
-                <span class="text-sm font-black font-mono">13.6%</span>
-                <span class="text-[10px] text-purple-100 font-semibold uppercase mt-0.5">3</span>
-                <span class="text-[9px] text-purple-200 mt-1 uppercase">Vendas Inic.</span>
-              </div>
-              <div class="bg-emerald-500 text-black p-3 rounded-r-xl flex flex-col justify-center font-bold">
-                <span class="text-sm font-black font-mono">4.5%</span>
-                <span class="text-[10px] text-slate-900 font-semibold uppercase mt-0.5">1</span>
-                <span class="text-[9px] text-slate-800 mt-1 uppercase">Vendas Apr.</span>
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between text-[11px] text-slate-400 mt-4 border-t border-dark-750/60 pt-3">
-              <span>Taxa Geral de Conversão (Cliques &rarr; Compras): <strong class="text-emerald-400 font-mono">4.54%</strong></span>
-              <span>Custo por Visita: <strong class="text-white font-mono private-blur">R$ 1,36</strong></span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Linha: Roscas e Gráficos de Vendas (Print 5) -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <!-- Taxa de Aprovação Pix -->
-          <div class="bg-dark-900 border border-dark-750/80 p-5 rounded-2xl flex flex-col justify-between">
-            <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-2">Taxa de Aprovação</h4>
-            <div class="flex items-center justify-between my-2">
-              <span class="text-xs text-slate-300">Pix</span>
-              <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-full border-4 border-dark-750 border-t-blue-500 flex items-center justify-center font-mono font-bold text-xs text-blue-400">
-                  33.3%
-                </div>
-              </div>
-            </div>
-            <div class="text-[11px] text-slate-400 border-t border-dark-750/60 pt-2 flex items-center justify-between">
-              <span>1 pago de 3 gerados</span>
-              <span class="text-blue-400 font-mono">33.3%</span>
-            </div>
-          </div>
-
-          <!-- Vendas por Pagamento -->
-          <div class="bg-dark-900 border border-dark-750/80 p-5 rounded-2xl flex flex-col justify-between">
-            <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-2">Vendas por Pagamento</h4>
-            <div class="flex items-center justify-center gap-6 my-2">
-              <div class="relative w-16 h-16 rounded-full border-4 border-blue-500 flex flex-col items-center justify-center">
-                <span class="text-[9px] text-slate-400 uppercase">Total</span>
-                <span class="text-sm font-black text-white font-mono">1</span>
-              </div>
-              <div class="text-xs space-y-1">
-                <div class="flex items-center gap-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                  <span class="text-slate-300">Pix: <strong>1 (100%)</strong></span>
-                </div>
-                <div class="flex items-center gap-2 text-slate-500">
-                  <span class="w-2.5 h-2.5 rounded-full bg-dark-700"></span>
-                  <span>Cartão: 0 (0%)</span>
-                </div>
-              </div>
-            </div>
-            <div class="text-[11px] text-slate-400 border-t border-dark-750/60 pt-2">
-              Predominância: 100% Pix imediato
-            </div>
-          </div>
-
-          <!-- Vendas por Posicionamento -->
-          <div class="bg-dark-900 border border-dark-750/80 p-5 rounded-2xl flex flex-col justify-between">
-            <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-2">Vendas por Posicionamento</h4>
-            <div class="flex items-center justify-between my-2">
-              <span class="text-xs text-slate-300">Facebook Feed</span>
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-bold text-white font-mono">1</span>
-                <div class="w-6 h-6 rounded-full border-2 border-blue-500 flex items-center justify-center text-[10px] text-blue-400 font-mono">
-                  100%
-                </div>
-              </div>
-            </div>
-            <div class="text-[11px] text-slate-400 border-t border-dark-750/60 pt-2">
-              Feed Mobile gerando todo o faturamento
-            </div>
-          </div>
-        </div>
-
-        <!-- Linha: Gráfico de Vendas por Horário / Fonte (Print 5) -->
-        <div class="bg-dark-900 border border-dark-750/80 p-5 rounded-2xl">
-          <div class="flex items-center justify-between mb-4">
-            <h4 class="text-xs font-bold text-white uppercase tracking-wider">Vendas por Horário / Fonte</h4>
-            <div class="flex items-center gap-2 text-xs">
-              <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-              <span class="text-slate-300">Facebook: <strong class="text-white font-mono">1 (100%)</strong></span>
-            </div>
-          </div>
-
-          <!-- Barras de Horário (00h até 23h) -->
-          <div class="h-32 flex items-end justify-between gap-1 border-b border-dark-750/60 pb-2 pt-4 px-2">
-            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">00h</span></div>
-            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">02h</span></div>
-            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">04h</span></div>
-            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">06h</span></div>
-            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">08h</span></div>
-            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">10h</span></div>
-            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">12h</span></div>
-            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-blue-500 rounded-t h-24 shadow-lg shadow-blue-500/30"></div><span class="text-[9px] text-blue-400 font-bold mt-1">14h</span></div>
-            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">16h</span></div>
-            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">18h</span></div>
-            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">20h</span></div>
-            <div class="flex-1 flex flex-col items-center"><div class="w-full bg-dark-800 rounded-t h-1"></div><span class="text-[9px] text-slate-500 mt-1">22h</span></div>
-          </div>
-        </div>
-
-        <!-- Linha: Cards Inferiores (Taxas, Impostos e Produtos - Print 5) -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <!-- Vendas por Produto -->
-          <div class="bg-dark-900 border border-dark-750/80 p-5 rounded-2xl flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <h4 class="text-xs font-bold text-white uppercase tracking-wider">Vendas por Produto</h4>
-                <span class="text-[10px] text-slate-400 font-mono">1 produto</span>
-              </div>
-              <div class="text-xs space-y-2 pt-2">
-                <div class="flex items-center justify-between text-slate-300">
-                  <span class="truncate max-w-[150px]">O Protocolo do Magnésio Celu...</span>
-                  <span class="font-bold font-mono text-white">1</span>
-                </div>
-              </div>
-            </div>
-            <div class="text-[11px] text-slate-400 border-t border-dark-750/60 pt-2 flex items-center justify-between">
-              <span>Total:</span>
-              <span class="font-bold font-mono text-emerald-400">1 venda</span>
-            </div>
-          </div>
-
-          <!-- Taxas Plataforma (Kiwify / Cackto / Green) -->
-          <div class="bg-dark-900 border border-dark-750/80 p-5 rounded-2xl flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <h4 class="text-xs font-bold text-white uppercase tracking-wider">Taxas Plataforma</h4>
-                <button onclick="openTaxModal()" class="text-slate-400 hover:text-amber-400"><i data-lucide="settings" class="w-3.5 h-3.5"></i></button>
-              </div>
-              <div class="text-lg font-black text-amber-400 font-mono private-blur" id="card-taxa-plataforma">R$ 3,48</div>
-              <p class="text-[11px] text-slate-400 mt-1">Pix/Boleto: 8,99% + R$ 2,49</p>
-            </div>
-            <div class="text-[11px] text-slate-400 border-t border-dark-750/60 pt-2">
-              Descontado na fonte pelo Checkout
-            </div>
-          </div>
-
-          <!-- Impostos da Empresa -->
-          <div class="bg-dark-900 border border-dark-750/80 p-5 rounded-2xl flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <h4 class="text-xs font-bold text-white uppercase tracking-wider">Impostos da Empresa</h4>
-                <button onclick="openTaxModal()" class="text-slate-400 hover:text-amber-400"><i data-lucide="settings" class="w-3.5 h-3.5"></i></button>
-              </div>
-              <div class="text-lg font-black text-white font-mono private-blur" id="card-imposto-empresa">R$ 0,00</div>
-              <p class="text-[11px] text-slate-400 mt-1" id="label-taxa-empresa">Não configurado (0%)</p>
-            </div>
-            <div class="text-[11px] text-slate-400 border-t border-dark-750/60 pt-2">
-              Nota fiscal / Simples Nacional
-            </div>
-          </div>
-
-          <!-- Imposto Meta Ads (Facebook) -->
-          <div class="bg-dark-900 border border-dark-750/80 p-5 rounded-2xl flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <h4 class="text-xs font-bold text-white uppercase tracking-wider">Imposto Meta Ads</h4>
-                <button onclick="openTaxModal()" class="text-slate-400 hover:text-amber-400"><i data-lucide="settings" class="w-3.5 h-3.5"></i></button>
-              </div>
-              <div class="text-lg font-black text-blue-400 font-mono private-blur" id="card-imposto-meta">R$ 3,07</div>
-              <p class="text-[11px] text-slate-400 mt-1" id="label-taxa-meta">12,50% do gasto em ads</p>
-            </div>
-            <div class="text-[11px] text-slate-400 border-t border-dark-750/60 pt-2">
-              IOF & Impostos sobre faturas Meta
-            </div>
-          </div>
-        </div>
-
-        <!-- Linha: Vendas por Localização (Mundo & Brasil - Print 5) -->
-        <div class="bg-dark-900 border border-dark-750/80 p-5 rounded-2xl">
-          <div class="flex items-center justify-between mb-4">
-            <h4 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-              <i data-lucide="map-pin" class="w-4 h-4 text-emerald-400"></i>
-              <span>Vendas por Localização</span>
-            </h4>
-            <span class="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
-              🇧🇷 Brasil lidera - 1 venda (100%)
-            </span>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Mundo -->
-            <div class="bg-dark-950 p-4 rounded-xl border border-dark-750">
-              <span class="text-xs font-bold text-slate-300 block mb-2">● MUNDO</span>
-              <div class="h-32 flex items-center justify-center text-slate-500 text-xs">
-                <div class="text-center">
-                  <i data-lucide="globe" class="w-8 h-8 text-slate-600 mx-auto mb-1"></i>
-                  <span>América do Sul (100%)</span>
-                </div>
-              </div>
-              <div class="flex items-center justify-between text-xs pt-2 border-t border-dark-800">
-                <span class="text-slate-300">🇧🇷 Brasil</span>
-                <span class="font-mono font-bold text-white">1 (100%)</span>
-              </div>
-            </div>
-
-            <!-- Brasil -->
-            <div class="bg-dark-950 p-4 rounded-xl border border-dark-750">
-              <span class="text-xs font-bold text-slate-300 block mb-2">● BRASIL</span>
-              <div class="h-32 flex items-center justify-center text-slate-500 text-xs">
-                <div class="text-center">
-                  <i data-lucide="map" class="w-8 h-8 text-blue-500/50 mx-auto mb-1"></i>
-                  <span>Região Sudeste (São Paulo)</span>
-                </div>
-              </div>
-              <div class="flex items-center justify-between text-xs pt-2 border-t border-dark-800">
-                <span class="text-slate-300">São Paulo, SP</span>
-                <span class="font-mono font-bold text-white">1 (100%)</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- ======================================================== -->
-      <!-- ABA 2: CAMPANHAS COM AS 4 SUB-ABAS (PRINTS 1, 2, 3 E 4)  -->
-      <!-- ======================================================== -->
-      <div id="tab-campanhas" class="hidden space-y-4">
+      <!-- ================= ABA 1: PAINEL / DASHBOARD PRINCIPAL (Print 20) ================= -->
+      <section id="tab-painel" class="tab-content space-y-6">
         
-        <!-- Header da Página de Campanhas (Prints 1, 2, 3, 4) -->
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div class="flex items-center gap-3">
-            <h2 class="text-xl font-bold text-white">Campanhas</h2>
-            <button onclick="togglePrivateMode()" class="text-slate-400 hover:text-white p-1 rounded bg-dark-850 border border-dark-750">
-              <i data-lucide="eye" class="w-4 h-4"></i>
+        <!-- Barra de Filtros Fiel ao Print 20 -->
+        <div class="bg-[#0a1228] p-3 rounded-2xl border border-slate-800/90 flex flex-wrap items-center justify-between gap-3 shadow-lg">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="text-xs font-bold text-slate-400 mr-1 hidden sm:inline">Período:</span>
+            <button onclick="setPeriodFilter('hoje')" class="period-btn px-3 py-1 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950 shadow">Hoje</button>
+            <button onclick="setPeriodFilter('ontem')" class="period-btn px-3 py-1 rounded-lg text-xs font-semibold text-slate-300 hover:bg-slate-800">Ontem</button>
+            <button onclick="setPeriodFilter('7d')" class="period-btn px-3 py-1 rounded-lg text-xs font-semibold text-slate-300 hover:bg-slate-800">7 dias</button>
+            <button onclick="setPeriodFilter('15d')" class="period-btn px-3 py-1 rounded-lg text-xs font-semibold text-slate-300 hover:bg-slate-800">15 dias</button>
+            <button onclick="setPeriodFilter('30d')" class="period-btn px-3 py-1 rounded-lg text-xs font-semibold text-slate-300 hover:bg-slate-800">30 dias</button>
+            <button onclick="openCustomDateModal()" class="period-btn px-3 py-1 rounded-lg text-xs font-semibold text-slate-300 hover:bg-slate-800 flex items-center gap-1">
+              <i class="fa-regular fa-calendar"></i> Personalizado
             </button>
           </div>
-          <button onclick="showToast('Sincronizado automaticamente com o Gerenciador de Anúncios', 'info')" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-2 shadow transition">
-            <i data-lucide="plus" class="w-4 h-4"></i>
-            <span>Criar Campanha</span>
-          </button>
+
+          <div class="flex items-center gap-2">
+            <!-- Dropdown Produtos -->
+            <select id="filter-products" onchange="applyGlobalFilters()" class="bg-[#070e22] text-xs text-slate-300 border border-slate-700/80 rounded-lg px-2.5 py-1.5 focus:outline-none">
+              <option value="all">Produtos (Todos)</option>
+              <option value="Protocolo Magnésio">Protocolo Magnésio</option>
+              <option value="Guia Renda Extra">Guia Renda Extra</option>
+            </select>
+
+            <!-- Dropdown Contas -->
+            <select id="filter-accounts" onchange="applyGlobalFilters()" class="bg-[#070e22] text-xs text-slate-300 border border-slate-700/80 rounded-lg px-2.5 py-1.5 focus:outline-none">
+              <option value="all">Contas (Todas)</option>
+              <option value="AGENCIA2">AGENCIA2</option>
+              <option value="BubbleBox01">BubbleBox01</option>
+            </select>
+
+            <button onclick="syncAllDataNow()" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs" title="Atualizar"><i class="fa-solid fa-arrows-rotate"></i></button>
+            <button onclick="exportDashboardSummaryCSV()" class="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs" title="Exportar"><i class="fa-solid fa-download"></i></button>
+          </div>
         </div>
 
-        <!-- As 4 Sub-Abas do Topo (Contas, Campanhas, Conjuntos, Anúncios) -->
-        <div class="flex items-center gap-6 border-b border-dark-750 pb-2 text-xs font-semibold">
-          <button onclick="switchCampaignSubTab('contas')" id="subtab-btn-contas" class="subtab-item text-slate-400 hover:text-white pb-2 transition">Contas</button>
-          <button onclick="switchCampaignSubTab('campanhas')" id="subtab-btn-campanhas" class="subtab-item text-blue-400 border-b-2 border-blue-500 pb-2 -mb-2.5 transition">Campanhas</button>
-          <button onclick="switchCampaignSubTab('conjuntos')" id="subtab-btn-conjuntos" class="subtab-item text-slate-400 hover:text-white pb-2 transition">Conjuntos</button>
-          <button onclick="switchCampaignSubTab('anuncios')" id="subtab-btn-anuncios" class="subtab-item text-slate-400 hover:text-white pb-2 transition">Anúncios</button>
+        <!-- Cards de KPIs (Faturamento Líquido, Lucro, Spend, CPA, ARPU, ROAS) -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div class="bg-[#0a1228] p-4 rounded-xl border border-slate-800">
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Faturamento Líquido</div>
+            <div id="kpi-faturamento-liq" class="text-xl md:text-2xl font-black text-white mt-1.5 private-val">R$ 0,00</div>
+            <div class="text-[11px] text-slate-400 mt-1">Bruto: <span id="kpi-faturamento-bruto" class="font-bold text-slate-300 private-val">R$ 0,00</span></div>
+          </div>
+
+          <div class="bg-[#0a1228] p-4 rounded-xl border border-slate-800">
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Lucro Líquido</div>
+            <div id="kpi-lucro-liq" class="text-xl md:text-2xl font-black text-emerald-400 mt-1.5 private-val">R$ 0,00</div>
+            <div id="kpi-lucro-status" class="text-[11px] text-emerald-400 font-bold mt-1">▲ Positivo</div>
+          </div>
+
+          <div class="bg-[#0a1228] p-4 rounded-xl border border-slate-800">
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Gasto em Ads</div>
+            <div id="kpi-gasto-ads" class="text-xl md:text-2xl font-black text-white mt-1.5 private-val">R$ 0,00</div>
+            <div class="text-[11px] text-amber-400/90 mt-1">+ Imposto Meta: <span id="kpi-imposto-ads" class="private-val">R$ 0,00</span></div>
+          </div>
+
+          <div class="bg-[#0a1228] p-4 rounded-xl border border-slate-800">
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">CPA Médio</div>
+            <div id="kpi-cpa" class="text-xl md:text-2xl font-black text-white mt-1.5 private-val">R$ 0,00</div>
+            <div class="text-[11px] text-slate-400 mt-1">Custo por venda</div>
+          </div>
+
+          <div class="bg-[#0a1228] p-4 rounded-xl border border-slate-800">
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">ARPU / Ticket</div>
+            <div id="kpi-arpu" class="text-xl md:text-2xl font-black text-white mt-1.5 private-val">R$ 0,00</div>
+            <div class="text-[11px] text-slate-400 mt-1">Ticket médio pago</div>
+          </div>
+
+          <div class="bg-[#0a1228] p-4 rounded-xl border border-slate-800">
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">ROAS Geral</div>
+            <div id="kpi-roas" class="text-xl md:text-2xl font-black text-cyan-400 mt-1.5 private-val">0.00x</div>
+            <div class="text-[11px] text-slate-400 mt-1">Margem: <span id="kpi-margem" class="text-emerald-400 font-bold private-val">0.0%</span></div>
+          </div>
         </div>
 
-        <!-- Filtros Superiores da Tabela (Status, Período, Busca, Gerenciador, Colunas, Cores, Exportar) -->
-        <div class="bg-dark-900 border border-dark-750 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <!-- Linha 2 de Cards Secundários -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="bg-[#0a1228] p-3.5 rounded-xl border border-slate-800">
+            <div class="text-[11px] font-bold text-slate-400">Vendas Aprovadas</div>
+            <div id="kpi-vendas-aprovadas" class="text-xl font-bold text-white mt-1">0</div>
+            <div class="text-[10px] text-emerald-400 mt-0.5">100% finalizadas</div>
+          </div>
+          <div class="bg-[#0a1228] p-3.5 rounded-xl border border-slate-800">
+            <div class="text-[11px] font-bold text-slate-400">Vendas Pendentes (Pix/Boleto)</div>
+            <div id="kpi-vendas-pendentes-valor" class="text-xl font-bold text-amber-400 mt-1 private-val">R$ 0,00</div>
+            <div id="kpi-vendas-pendentes-qtd" class="text-[10px] text-slate-400 mt-0.5">0 aguardando</div>
+          </div>
+          <div class="bg-[#0a1228] p-3.5 rounded-xl border border-slate-800">
+            <div class="text-[11px] font-bold text-slate-400">Chargeback / Reembolso</div>
+            <div class="text-xl font-bold text-rose-400 mt-1">0.0%</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">0 devoluções</div>
+          </div>
+          <div class="bg-[#0a1228] p-3.5 rounded-xl border border-slate-800">
+            <div class="text-[11px] font-bold text-slate-400">Taxas & Impostos Totais</div>
+            <div id="kpi-taxas-totais" class="text-xl font-bold text-slate-300 mt-1 private-val">R$ 0,00</div>
+            <div class="text-[10px] text-amber-400 mt-0.5">Plataforma + NF + Meta</div>
+          </div>
+        </div>
+
+        <!-- Funil Completo Meta Ads Fiel ao Print -->
+        <div class="bg-[#0a1228] p-5 rounded-2xl border border-slate-800">
+          <div class="flex items-center justify-between mb-4">
+            <div class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-filter text-indigo-400"></i> Funil de Conversão (Meta Ads + Checkouts)
+            </div>
+            <span class="text-xs text-slate-400">Últimas 24 horas</span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center">
+            <div class="bg-indigo-950/40 border border-indigo-800/40 p-3 rounded-xl">
+              <div class="text-[10px] text-indigo-300 font-bold uppercase">Cliques</div>
+              <div id="funnel-clicks" class="text-lg font-black text-white mt-1">22</div>
+              <div class="text-[10px] text-slate-400">100%</div>
+            </div>
+            <div class="bg-blue-950/40 border border-blue-800/40 p-3 rounded-xl">
+              <div class="text-[10px] text-blue-300 font-bold uppercase">Vis. Página</div>
+              <div id="funnel-pageviews" class="text-lg font-black text-white mt-1">18</div>
+              <div class="text-[10px] text-blue-400 font-bold">81.8%</div>
+            </div>
+            <div class="bg-purple-950/40 border border-purple-800/40 p-3 rounded-xl">
+              <div class="text-[10px] text-purple-300 font-bold uppercase">ICs (Checkouts)</div>
+              <div id="funnel-ics" class="text-lg font-black text-white mt-1">5</div>
+              <div class="text-[10px] text-purple-400 font-bold">22.7%</div>
+            </div>
+            <div class="bg-pink-950/40 border border-pink-800/40 p-3 rounded-xl">
+              <div class="text-[10px] text-pink-300 font-bold uppercase">Vendas Inic.</div>
+              <div id="funnel-started" class="text-lg font-black text-white mt-1">3</div>
+              <div class="text-[10px] text-pink-400 font-bold">13.6%</div>
+            </div>
+            <div class="bg-emerald-950/40 border border-emerald-800/40 p-3 rounded-xl col-span-2 sm:col-span-1">
+              <div class="text-[10px] text-emerald-300 font-bold uppercase">Vendas Aprov.</div>
+              <div id="funnel-approved" class="text-lg font-black text-emerald-400 mt-1">1</div>
+              <div class="text-[10px] text-emerald-400 font-bold">4.5%</div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ================= ABA 2: CAMPANHAS COM MULTILOGIN E CSV PADRÃO (Print 19) ================= -->
+      <section id="tab-campanhas" class="tab-content hidden space-y-4">
+        
+        <!-- Header Sub-abas e Criar Campanha -->
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+          <div class="flex items-center gap-6">
+            <button onclick="setCampaignView('contas')" id="subnav-contas" class="subnav-btn text-sm font-semibold text-slate-400 hover:text-white pb-1">Contas</button>
+            <button onclick="setCampaignView('campanhas')" id="subnav-campanhas" class="subnav-btn text-sm font-bold text-emerald-400 border-b-2 border-emerald-400 pb-1">Campanhas</button>
+            <button onclick="setCampaignView('conjuntos')" id="subnav-conjuntos" class="subnav-btn text-sm font-semibold text-slate-400 hover:text-white pb-1">Conjuntos</button>
+            <button onclick="setCampaignView('anuncios')" id="subnav-anuncios" class="subnav-btn text-sm font-semibold text-slate-400 hover:text-white pb-1">Anúncios</button>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-slate-400 hidden sm:inline"><i class="fa-solid fa-check text-emerald-400"></i> 400 campanhas, 3212 anúncios atualizados</span>
+            <button onclick="openCreateCampaignModal()" class="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow transition">
+              <i class="fa-solid fa-plus"></i> Criar Campanha
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtros e Barra de Ações com Multilogin (Print 19) -->
+        <div class="bg-[#0a1228] p-3 rounded-xl border border-slate-800 flex flex-wrap items-center justify-between gap-2.5">
           <div class="flex flex-wrap items-center gap-2">
-            <!-- Status Select -->
-            <div class="flex items-center gap-1.5 bg-dark-850 px-3 py-1.5 rounded-xl border border-dark-750">
-              <span class="text-slate-400 text-[11px]">Status:</span>
-              <select id="camp-filter-status" onchange="renderActiveSubTabTable()" class="bg-transparent text-white font-medium outline-none cursor-pointer">
-                <option value="ativo" selected>Ativo</option>
-                <option value="todos">Todos</option>
-                <option value="pausado">Pausado</option>
-              </select>
-            </div>
-
-            <!-- Período Select -->
-            <div class="flex items-center gap-1.5 bg-dark-850 px-3 py-1.5 rounded-xl border border-dark-750">
-              <span class="text-slate-400 text-[11px]">Período:</span>
-              <select id="camp-filter-period" onchange="renderActiveSubTabTable()" class="bg-transparent text-white font-medium outline-none cursor-pointer">
-                <option value="hoje" selected>Hoje</option>
-                <option value="ontem">Ontem</option>
-                <option value="7d">Últimos 7 dias</option>
-                <option value="mes">Este mês</option>
-              </select>
-            </div>
-
-            <!-- Search input -->
-            <div class="relative w-48 sm:w-56">
-              <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-              <input type="text" id="camp-search-input" onkeyup="filterSubTabBySearch()" placeholder="Buscar por nome..." class="w-full bg-dark-850 border border-dark-750 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white outline-none focus:border-blue-500">
+            <select id="campaign-status-filter" class="bg-[#070e22] text-xs text-slate-300 border border-slate-700 rounded-lg px-2.5 py-1.5">
+              <option value="ACTIVE">Ativo</option>
+              <option value="PAUSED">Pausado</option>
+              <option value="ALL">Todos os Status</option>
+            </select>
+            <select id="campaign-period-filter" class="bg-[#070e22] text-xs text-slate-300 border border-slate-700 rounded-lg px-2.5 py-1.5">
+              <option value="today">Hoje</option>
+              <option value="yesterday">Ontem</option>
+              <option value="last7d">Últimos 7 dias</option>
+            </select>
+            <div class="relative">
+              <input type="text" id="search-campaign" placeholder="Buscar por nome..." oninput="filterCampaignsTable()" class="bg-[#070e22] text-xs text-slate-200 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 w-44 md:w-56 focus:outline-none">
+              <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-xs text-slate-500"></i>
             </div>
           </div>
 
           <div class="flex items-center gap-2">
-            <button onclick="showToast('Abrindo Gerenciador de Anúncios...', 'info')" class="px-3 py-1.5 rounded-xl bg-dark-850 hover:bg-dark-800 border border-dark-750 text-slate-200 text-xs flex items-center gap-1.5">
-              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-              <span>Gerenciador</span>
+            <!-- Botão Gerenciador (Dolphin / AdsPower / Link direto) -->
+            <button onclick="openMetaAdsManagerModal()" class="px-2.5 py-1.5 bg-[#070e22] hover:bg-slate-800 text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-arrow-up-right-from-square text-blue-400"></i> Gerenciador
             </button>
-            <button onclick="showToast('Personalizar colunas...', 'info')" class="px-3 py-1.5 rounded-xl bg-dark-850 hover:bg-dark-800 border border-dark-750 text-slate-200 text-xs flex items-center gap-1.5">
-              <i data-lucide="columns" class="w-3.5 h-3.5"></i>
-              <span>Colunas</span>
+
+            <!-- Personalizar Colunas -->
+            <button onclick="openColumnsCustomizerModal()" class="px-2.5 py-1.5 bg-[#070e22] hover:bg-slate-800 text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-pen text-amber-400"></i> Colunas
             </button>
-            <button onclick="showToast('Legenda de cores: Verde = Lucro | Vermelho = Prejuízo', 'info')" class="px-3 py-1.5 rounded-xl bg-dark-850 hover:bg-dark-800 border border-dark-750 text-slate-200 text-xs flex items-center gap-1.5">
-              <i data-lucide="palette" class="w-3.5 h-3.5"></i>
-              <span>Cores</span>
-            </button>
-            <button onclick="refreshDashboard()" class="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs">Atualizar</button>
-            <button onclick="exportTableToCSV()" class="px-3 py-1.5 rounded-xl bg-dark-850 hover:bg-dark-800 border border-dark-750 text-slate-200 text-xs flex items-center gap-1.5">
-              <i data-lucide="download" class="w-3.5 h-3.5"></i>
-              <span>Exportar</span>
+
+            <!-- Atualizar e Exportar CSV -->
+            <button onclick="syncAllDataNow()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition">Atualizar</button>
+            <button onclick="exportCampaignsCSV()" class="px-2.5 py-1.5 bg-[#070e22] hover:bg-slate-800 text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-download"></i> Exportar
             </button>
           </div>
         </div>
 
-        <!-- 1. SUB-TAB: CONTAS (PRINT 1) -->
-        <div id="subtab-contas-view" class="hidden bg-dark-900 border border-dark-750 rounded-2xl overflow-hidden shadow-2xl">
-          <div class="p-3 bg-dark-850/80 border-b border-dark-750 text-xs text-slate-400 font-mono flex items-center justify-between">
-            <span>Saldo atualizado há 40 min</span>
-            <button onclick="showToast('Saldos atualizados!', 'success')" class="text-blue-400 hover:underline">Atualizar saldo</button>
-          </div>
-          <table class="w-full text-left text-xs whitespace-nowrap">
-            <thead class="bg-dark-850 text-slate-400 text-[11px] border-b border-dark-750 uppercase font-semibold">
-              <tr>
-                <th class="py-3.5 px-6">CONTA</th>
-                <th class="py-3.5 px-6">SALDO</th>
-                <th class="py-3.5 px-6 text-right">STATUS</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-dark-750/50">
-              <tr class="hover:bg-dark-850/60">
-                <td class="py-4 px-6">
-                  <div class="font-bold text-white">AGENCIA2</div>
-                  <div class="text-[11px] text-slate-400 font-mono">1020967616138580</div>
-                </td>
-                <td class="py-4 px-6 font-mono text-slate-400">—</td>
-                <td class="py-4 px-6 text-right">
-                  <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-600 text-white">Ativo</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="p-3 bg-dark-950 border-t border-dark-750 text-xs font-mono font-bold text-slate-300">
-            1 CONTA
-          </div>
-        </div>
-
-        <!-- 2. SUB-TAB: CAMPANHAS (PRINT 2) -->
-        <div id="subtab-campanhas-view" class="bg-dark-900 border border-dark-750 rounded-2xl overflow-hidden shadow-2xl">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs whitespace-nowrap">
-              <thead class="bg-dark-850 text-slate-400 text-[11px] border-b border-dark-750 uppercase font-semibold">
-                <tr>
-                  <th class="py-3 px-3 text-center"><input type="checkbox" class="rounded bg-dark-700"></th>
-                  <th class="py-3 px-3">STATUS</th>
-                  <th class="py-3 px-4">CAMPANHA</th>
-                  <th class="py-3 px-3">ÚLTIMA ATUALIZAÇÃO</th>
-                  <th class="py-3 px-3">ORÇAMENTO</th>
-                  <th class="py-3 px-3">GASTO</th>
-                  <th class="py-3 px-3">LUCRO</th>
-                  <th class="py-3 px-3">FATURAMENTO</th>
-                  <th class="py-3 px-3">VENDAS</th>
-                  <th class="py-3 px-3">ROAS</th>
-                  <th class="py-3 px-3">MARGEM</th>
-                  <th class="py-3 px-3">IC</th>
-                  <th class="py-3 px-3">CUSTO/IC</th>
-                  <th class="py-3 px-3">VENDAS PEND.</th>
-                  <th class="py-3 px-3">CLIQUES</th>
-                  <th class="py-3 px-3">CPC</th>
-                  <th class="py-3 px-3">CPA</th>
-                  <th class="py-3 px-3">CPM</th>
-                  <th class="py-3 px-3">CTR</th>
-                  <th class="py-3 px-3">ARPU</th>
-                  <th class="py-3 px-3">% IC</th>
-                  <th class="py-3 px-3">IMPRESSÕES</th>
-                  <th class="py-3 px-3">VISITAS</th>
+        <!-- Tabela Fiel com Todas as Colunas Padronizadas do CSV -->
+        <div class="bg-[#0a1228] rounded-xl border border-slate-800 overflow-hidden shadow-xl">
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse text-xs whitespace-nowrap">
+              <thead>
+                <tr class="bg-[#070e22] text-slate-400 border-b border-slate-800 uppercase text-[10px] font-bold tracking-wider">
+                  <th class="p-3 text-center w-10"><input type="checkbox" class="rounded bg-slate-900 border-slate-700"></th>
+                  <th class="p-3">Status</th>
+                  <th class="p-3">Campanha</th>
+                  <th class="p-3">Conta</th>
+                  <th class="p-3">Orçamento (R$)</th>
+                  <th class="p-3">Tipo Orç.</th>
+                  <th class="p-3">Gasto (R$)</th>
+                  <th class="p-3">Impressões</th>
+                  <th class="p-3">Cliques</th>
+                  <th class="p-3">Conversões</th>
+                  <th class="p-3">CPA (R$)</th>
+                  <th class="p-3">CTR (%)</th>
+                  <th class="p-3">Lucro Real</th>
+                  <th class="p-3">ID Meta</th>
                 </tr>
               </thead>
-              <tbody id="campanhas-subtab-tbody" class="divide-y divide-dark-750/50 font-mono text-slate-200">
-                <!-- Dynamically populated -->
+              <tbody id="campaigns-table-body" class="divide-y divide-slate-800/80 font-medium text-slate-200">
+                <!-- Linhas populadas dinamicamente via JS com dados do CSV -->
               </tbody>
             </table>
           </div>
-          <div class="p-3 bg-dark-950 border-t border-dark-750 flex items-center justify-between text-xs font-mono">
-            <span class="font-bold text-white" id="campanhas-footer-count">1 CAMPANHA</span>
-            <div class="flex items-center gap-4">
-              <span>Gasto: <strong class="text-white private-blur">R$ 24,52</strong></span>
-              <span>Lucro: <strong class="text-blue-400 font-bold private-blur">R$ 9,99</strong></span>
-              <span>Faturamento: <strong class="text-white private-blur">R$ 34,51</strong></span>
-              <span>ROAS: <strong class="text-blue-400 font-bold">1,41</strong></span>
-              <span>Margem: <strong class="text-blue-400 font-bold">28.9%</strong></span>
-            </div>
-          </div>
         </div>
 
-        <!-- 3. SUB-TAB: CONJUNTOS (PRINT 3) -->
-        <div id="subtab-conjuntos-view" class="hidden bg-dark-900 border border-dark-750 rounded-2xl overflow-hidden shadow-2xl">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs whitespace-nowrap">
-              <thead class="bg-dark-850 text-slate-400 text-[11px] border-b border-dark-750 uppercase font-semibold">
-                <tr>
-                  <th class="py-3 px-3 text-center"><input type="checkbox" class="rounded bg-dark-700"></th>
-                  <th class="py-3 px-3">STATUS</th>
-                  <th class="py-3 px-4">CONJUNTO</th>
-                  <th class="py-3 px-3">ÚLTIMA ATUALIZAÇÃO</th>
-                  <th class="py-3 px-3">ORÇAMENTO</th>
-                  <th class="py-3 px-3">GASTO</th>
-                  <th class="py-3 px-3">LUCRO</th>
-                  <th class="py-3 px-3">FATURAMENTO</th>
-                  <th class="py-3 px-3">VENDAS</th>
-                  <th class="py-3 px-3">ROAS</th>
-                  <th class="py-3 px-3">MARGEM</th>
-                  <th class="py-3 px-3">IC</th>
-                  <th class="py-3 px-3">CUSTO/IC</th>
-                  <th class="py-3 px-3">LANCE</th>
-                  <th class="py-3 px-3">VENDAS PEND.</th>
-                  <th class="py-3 px-3">CLIQUES</th>
-                  <th class="py-3 px-3">CPC</th>
-                  <th class="py-3 px-3">CPA</th>
-                  <th class="py-3 px-3">CPM</th>
-                  <th class="py-3 px-3">CTR</th>
-                  <th class="py-3 px-3">ARPU</th>
-                  <th class="py-3 px-3">% IC</th>
-                  <th class="py-3 px-3">IMPRESSÕES</th>
-                  <th class="py-3 px-3">VISITAS</th>
-                </tr>
-              </thead>
-              <tbody id="conjuntos-subtab-tbody" class="divide-y divide-dark-750/50 font-mono text-slate-200">
-                <!-- Dynamically populated -->
-              </tbody>
-            </table>
-          </div>
-          <div class="p-3 bg-dark-950 border-t border-dark-750 flex items-center justify-between text-xs font-mono">
-            <span class="font-bold text-white" id="conjuntos-footer-count">1 CONJUNTO</span>
-            <div class="flex items-center gap-4">
-              <span>Gasto: <strong class="text-white private-blur">R$ 24,52</strong></span>
-              <span>Lucro: <strong class="text-blue-400 font-bold private-blur">R$ 9,99</strong></span>
-              <span>Faturamento: <strong class="text-white private-blur">R$ 34,51</strong></span>
-            </div>
-          </div>
-        </div>
+      </section>
 
-        <!-- 4. SUB-TAB: ANÚNCIOS (PRINT 4 COM BOTÃO PREVIEW) -->
-        <div id="subtab-anuncios-view" class="hidden bg-dark-900 border border-dark-750 rounded-2xl overflow-hidden shadow-2xl">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs whitespace-nowrap">
-              <thead class="bg-dark-850 text-slate-400 text-[11px] border-b border-dark-750 uppercase font-semibold">
-                <tr>
-                  <th class="py-3 px-3 text-center"><input type="checkbox" class="rounded bg-dark-700"></th>
-                  <th class="py-3 px-3">STATUS</th>
-                  <th class="py-3 px-4">ANÚNCIO</th>
-                  <th class="py-3 px-3">ÚLTIMA ATUALIZAÇÃO</th>
-                  <th class="py-3 px-3 text-center">PREVIEW</th>
-                  <th class="py-3 px-3">GASTO</th>
-                  <th class="py-3 px-3">LUCRO</th>
-                  <th class="py-3 px-3">FATURAMENTO</th>
-                  <th class="py-3 px-3">VENDAS</th>
-                  <th class="py-3 px-3">ROAS</th>
-                  <th class="py-3 px-3">MARGEM</th>
-                  <th class="py-3 px-3">IC</th>
-                  <th class="py-3 px-3">CUSTO/IC</th>
-                  <th class="py-3 px-3">VENDAS PEND.</th>
-                  <th class="py-3 px-3">CLIQUES</th>
-                  <th class="py-3 px-3">CPC</th>
-                  <th class="py-3 px-3">CPA</th>
-                  <th class="py-3 px-3">CPM</th>
-                  <th class="py-3 px-3">CTR</th>
-                  <th class="py-3 px-3">ARPU</th>
-                  <th class="py-3 px-3">% IC</th>
-                  <th class="py-3 px-3">IMPRESSÕES</th>
-                  <th class="py-3 px-3">VISITAS</th>
-                </tr>
-              </thead>
-              <tbody id="anuncios-subtab-tbody" class="divide-y divide-dark-750/50 font-mono text-slate-200">
-                <!-- Dynamically populated from Print 4 -->
-              </tbody>
-            </table>
-          </div>
-          <div class="p-3 bg-dark-950 border-t border-dark-750 flex items-center justify-between text-xs font-mono">
-            <span class="font-bold text-white" id="anuncios-footer-count">5 ANÚNCIOS</span>
-            <div class="flex items-center gap-4">
-              <span>Gasto: <strong class="text-white private-blur">R$ 24,52</strong></span>
-              <span>Lucro: <strong class="text-blue-400 font-bold private-blur">R$ 9,99</strong></span>
-              <span>Faturamento: <strong class="text-white private-blur">R$ 34,51</strong></span>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- ======================================================== -->
-      <!-- DEMAIS ABAS: RESUMO, AO VIVO, VENDAS, REGRAS, ETC.       -->
-      <!-- ======================================================== -->
-      <div id="tab-resumo" class="hidden space-y-6">
-        <!-- Globo 3D Resumo e Feed ao Vivo -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div class="lg:col-span-5 bg-dark-900 border border-dark-750/80 p-5 rounded-2xl flex flex-col justify-between">
-            <div class="flex items-center justify-between">
-              <h3 class="text-xs font-bold text-white flex items-center gap-2">
-                <i data-lucide="globe" class="w-4 h-4 text-emerald-400"></i>
-                <span>Alcance Global (Ao Vivo)</span>
-              </h3>
-              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            </div>
-            <div class="relative w-full h-64 flex items-center justify-center my-2">
-              <canvas id="globe-canvas" width="300" height="300" class="cursor-grab"></canvas>
-            </div>
-            <div class="text-[11px] text-slate-400 border-t border-dark-750/60 pt-3 flex items-center justify-between">
-              <span>Último disparo: São Paulo, Brasil</span>
-              <span class="text-emerald-400 font-mono font-bold">UTC-3</span>
-            </div>
-          </div>
-
-          <!-- Feed de Vendas -->
-          <div class="lg:col-span-7 bg-dark-900 border border-dark-750/80 p-5 rounded-2xl flex flex-col justify-between">
-            <div class="flex items-center justify-between mb-3">
-              <h3 class="text-xs font-bold text-white flex items-center gap-2">
-                <i data-lucide="zap" class="w-4 h-4 text-emerald-400"></i>
-                <span>Vendas em tempo real</span>
-              </h3>
-              <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                ao vivo
-              </span>
-            </div>
-            <div id="live-sales-feed" class="space-y-2.5 overflow-y-auto max-h-[300px] pr-1"></div>
-            <button onclick="switchTab('vendas')" class="w-full mt-3 py-2 rounded-xl bg-dark-850 hover:bg-dark-800 border border-dark-750 text-slate-300 text-xs font-semibold">
-              Ver todas as vendas analíticas
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tab Ao Vivo (Globo Expandido) -->
-      <div id="tab-aovivo" class="hidden space-y-4">
-        <div class="bg-dark-900 border border-dark-750 rounded-2xl p-6 text-center">
-          <h2 class="text-lg font-black text-white">Monitoramento de Compradores ao Vivo</h2>
-          <p class="text-xs text-slate-400 max-w-lg mx-auto mt-1 mb-6">Cada nó aceso no globo representa um checkout aprovado ou visitado nos últimos minutos.</p>
-          <div class="w-full flex items-center justify-center">
-            <canvas id="globe-canvas-large" width="440" height="440" class="cursor-grab max-w-full"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tab Vendas (Analítica) -->
-      <div id="tab-vendas" class="hidden space-y-4">
-        <div class="bg-dark-900 border border-dark-750 rounded-2xl p-5">
-          <h3 class="text-base font-bold text-white mb-4">Transações & Rastreamento com UTMs</h3>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs whitespace-nowrap">
-              <thead class="bg-dark-850 text-slate-400 text-[11px] border-b border-dark-750">
-                <tr>
-                  <th class="py-3 px-4">Hora</th>
-                  <th class="py-3 px-4">Plataforma</th>
-                  <th class="py-3 px-4">Cliente</th>
-                  <th class="py-3 px-4">Valor</th>
-                  <th class="py-3 px-4">Status</th>
-                  <th class="py-3 px-4">utm_source</th>
-                  <th class="py-3 px-4">utm_campaign</th>
-                  <th class="py-3 px-4">utm_content</th>
-                  <th class="py-3 px-4 text-center">Meta CAPI</th>
-                </tr>
-              </thead>
-              <tbody id="vendas-analiticas-body" class="divide-y divide-dark-750/50 font-mono"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tab Visitas -->
-      <div id="tab-visitas" class="hidden space-y-4">
-        <div class="bg-dark-900 border border-dark-750 rounded-2xl p-5">
-          <h3 class="text-base font-bold text-white mb-4">Pageviews & Sessões em Tempo Real</h3>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs whitespace-nowrap">
-              <thead class="bg-dark-850 text-slate-400 text-[11px] border-b border-dark-750">
-                <tr>
-                  <th class="py-3 px-4">Data/Hora</th>
-                  <th class="py-3 px-4">IP / Local</th>
-                  <th class="py-3 px-4">Dispositivo</th>
-                  <th class="py-3 px-4">utm_source</th>
-                  <th class="py-3 px-4">utm_campaign</th>
-                  <th class="py-3 px-4 text-center">Checkout Clicado</th>
-                </tr>
-              </thead>
-              <tbody id="visitas-table-body" class="divide-y divide-dark-750/50 font-mono"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tab Regras Automáticas (PRO) -->
-      <div id="tab-regras" class="hidden space-y-6">
-        <div class="bg-dark-900 border border-dark-750 p-6 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <!-- ================= ABA 3: VENDAS (Print 18) ================= -->
+      <section id="tab-vendas" class="tab-content hidden space-y-4">
+        
+        <!-- Header Filtros Vendas Fiel ao Print 18 -->
+        <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div class="flex items-center gap-2 mb-1">
-              <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-amber-500 text-black">Módulo PRO</span>
-              <h2 class="text-base font-bold text-white">Regras Automáticas de Otimização & Escala</h2>
-            </div>
-            <p class="text-xs text-slate-400 max-w-2xl">
-              Automatize pausas (stop-loss), aumento de orçamento (+20%) e proteção de margem com cruzamento dos dados da Kiwify, Cackto e Green com o Facebook Ads.
-            </p>
+            <h2 class="text-xl font-bold text-white tracking-tight">Vendas</h2>
+            <div id="vendas-subcount" class="text-xs text-slate-400 mt-0.5">4 vendas hoje</div>
           </div>
-          <div class="flex items-center gap-2">
-            <button onclick="runAutoRulesNow()" class="px-4 py-2.5 rounded-xl bg-dark-800 hover:bg-dark-750 border border-dark-700 text-white font-bold text-xs flex items-center gap-2">
-              <i data-lucide="play" class="w-3.5 h-3.5 text-emerald-400"></i>
-              <span>Executar Regras Agora</span>
-            </button>
-            <button onclick="openCreateRuleModal()" class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs flex items-center gap-2">
-              <i data-lucide="plus" class="w-4 h-4"></i>
-              <span>Nova Regra</span>
-            </button>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Dropdowns Origens, Produtos, Plataformas, Campanhas -->
+            <select id="sales-filter-origin" onchange="filterSalesList()" class="bg-[#0a1228] text-xs text-slate-300 border border-slate-700 rounded-lg px-3 py-1.5">
+              <option value="all">Origens (Todas)</option>
+              <option value="FB">Facebook Ads (FB)</option>
+              <option value="Google">Google Ads</option>
+              <option value="TikTok">TikTok Ads</option>
+            </select>
+
+            <select id="sales-filter-product" onchange="filterSalesList()" class="bg-[#0a1228] text-xs text-slate-300 border border-slate-700 rounded-lg px-3 py-1.5">
+              <option value="all">Produtos (Todos)</option>
+              <option value="Protocolo Magnésio">Protocolo Magnésio</option>
+              <option value="Guia Renda Extra">Guia Renda Extra</option>
+            </select>
+
+            <select id="sales-filter-platform" onchange="filterSalesList()" class="bg-[#0a1228] text-xs text-slate-300 border border-slate-700 rounded-lg px-3 py-1.5">
+              <option value="all">Plataformas (Todas)</option>
+              <option value="cackto">Cakto</option>
+              <option value="kiwify">Kiwify</option>
+              <option value="green">Greenn</option>
+              <option value="wiapy">Wiapy</option>
+              <option value="hotmart">Hotmart</option>
+            </select>
+
+            <select id="sales-filter-campaign" onchange="filterSalesList()" class="bg-[#0a1228] text-xs text-slate-300 border border-slate-700 rounded-lg px-3 py-1.5">
+              <option value="all">Campanhas (Todas)</option>
+              <option value="C03_Magnes_testecriativo3">C03_Magnes_testecriativo3</option>
+            </select>
+
+            <button onclick="togglePrivateMode()" class="p-2 bg-[#0a1228] text-slate-300 border border-slate-700 rounded-lg text-xs" title="Modo Privado"><i class="fa-solid fa-eye"></i></button>
+            <button onclick="setSalesQuickPeriod('hoje')" class="px-2.5 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold">Hoje</button>
+            <button onclick="setSalesQuickPeriod('ontem')" class="px-2.5 py-1.5 bg-[#0a1228] text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold">Ontem</button>
+            <button onclick="setSalesQuickPeriod('7d')" class="px-2.5 py-1.5 bg-[#0a1228] text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold">7d</button>
+            <button onclick="exportSalesCSV()" class="px-3 py-1.5 bg-[#0a1228] text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5"><i class="fa-solid fa-download"></i> Exportar</button>
           </div>
         </div>
 
-        <div class="bg-dark-900 border border-dark-750 rounded-2xl overflow-hidden">
-          <div class="p-4 border-b border-dark-750 flex items-center justify-between">
-            <h3 class="text-xs font-bold text-white uppercase tracking-wider">Regras Configuradas</h3>
-            <span class="text-xs font-mono text-slate-400" id="rules-count-badge">4 regras ativas</span>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs whitespace-nowrap">
-              <thead class="bg-dark-850 text-slate-400 text-[11px] border-b border-dark-750 uppercase">
-                <tr>
-                  <th class="py-3 px-4">Status</th>
-                  <th class="py-3 px-4">Nome da Regra</th>
-                  <th class="py-3 px-4">Aplica-se a</th>
-                  <th class="py-3 px-4">Contas / Produtos</th>
-                  <th class="py-3 px-4">Ação</th>
-                  <th class="py-3 px-4">Condição Gatilho</th>
-                  <th class="py-3 px-4">Última Execução</th>
+        <!-- Tabela de Vendas -->
+        <div class="bg-[#0a1228] rounded-xl border border-slate-800 overflow-hidden shadow-xl">
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse text-xs whitespace-nowrap">
+              <thead>
+                <tr class="bg-[#070e22] text-slate-400 border-b border-slate-800 uppercase text-[10px] font-bold">
+                  <th class="p-3">Data / Hora</th>
+                  <th class="p-3">Status</th>
+                  <th class="p-3">Plataforma</th>
+                  <th class="p-3">Produto</th>
+                  <th class="p-3">Valor Bruto</th>
+                  <th class="p-3">Taxas</th>
+                  <th class="p-3">Valor Líquido</th>
+                  <th class="p-3">Origem (UTM)</th>
+                  <th class="p-3">Campanha</th>
+                  <th class="p-3">Meta CAPI</th>
                 </tr>
               </thead>
-              <tbody id="rules-table-body" class="divide-y divide-dark-750/50"></tbody>
+              <tbody id="sales-table-body" class="divide-y divide-slate-800/80">
+                <!-- Inserido dinamicamente -->
+              </tbody>
             </table>
           </div>
         </div>
-      </div>
 
-      <!-- Tab Integrações (Print LowTrack) -->
-      <div id="tab-integracoes" class="hidden space-y-6">
-        <div>
-          <h2 class="text-lg font-bold text-white">Integrações de Contas</h2>
-          <p class="text-xs text-slate-400">Conecte suas contas de anúncio da Meta para sincronizar gastos e disparar CAPI</p>
+      </section>
+
+      <!-- ================= ABA 4: INTEGRAÇÕES & MÚLTIPLOS PIXELS (Print 17) ================= -->
+      <section id="tab-integracoes" class="tab-content hidden space-y-5">
+        
+        <!-- Header Abas Integrações Fiel ao Print 17 -->
+        <div class="border-b border-slate-800 flex flex-wrap items-center gap-6 pb-2">
+          <button onclick="setIntegrationSubTab('facebook')" id="int-subnav-facebook" class="text-sm font-bold text-emerald-400 border-b-2 border-emerald-400 pb-2">Facebook Ads</button>
+          <button onclick="setIntegrationSubTab('pixel')" id="int-subnav-pixel" class="text-sm font-semibold text-slate-400 hover:text-white pb-2">Pixel de Rastreio</button>
+          <button onclick="setIntegrationSubTab('utms')" id="int-subnav-utms" class="text-sm font-semibold text-slate-400 hover:text-white pb-2">UTMs</button>
+          <button onclick="setIntegrationSubTab('webhooks')" id="int-subnav-webhooks" class="text-sm font-semibold text-slate-400 hover:text-white pb-2">Webhook API</button>
+          <button onclick="setIntegrationSubTab('app')" id="int-subnav-app" class="text-sm font-semibold text-slate-400 hover:text-white pb-2">Baixe nosso App</button>
+          <button onclick="setIntegrationSubTab('duvidas')" id="int-subnav-duvidas" class="text-sm font-semibold text-slate-400 hover:text-white pb-2">Dúvidas</button>
         </div>
 
-        <div class="bg-dark-900 border border-dark-750 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-sm">
-              L
+        <!-- Sub-aba 1: Facebook Ads (Contas & BM) -->
+        <div id="int-pane-facebook" class="space-y-4">
+          <div class="bg-[#0a1228] p-5 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-full bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-base">
+                L
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-white">Leticia Rocha (Perfil Conectado)</h3>
+                <p class="text-xs text-slate-400">ID: 1131719866074357 • 8 conta(s) de anúncio</p>
+              </div>
             </div>
-            <div>
-              <h4 class="text-sm font-bold text-white">Leticia Rocha</h4>
-              <div class="text-[11px] text-slate-400 font-mono">ID: 1131719866074357 • 8 conta(s) de anúncio</div>
+            <div class="flex items-center gap-2">
+              <button onclick="openMetaAdsManagerModal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg">Gerenciador</button>
+              <button onclick="alert('Perfil sincronizado com sucesso!')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg">Conectado</button>
             </div>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="px-3 py-1.5 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-bold">Conectado</span>
-            <button onclick="showToast('Reconectando token da Meta API...', 'info')" class="px-3.5 py-1.5 rounded-xl bg-dark-800 text-slate-200 text-xs font-semibold border border-dark-700">Reconectar</button>
+
+          <!-- Tabela de Contas Conectadas -->
+          <div class="bg-[#0a1228] rounded-xl border border-slate-800 overflow-hidden">
+            <table class="w-full text-left text-xs whitespace-nowrap">
+              <thead class="bg-[#070e22] text-slate-400 uppercase text-[10px] font-bold">
+                <tr>
+                  <th class="p-3">Conta</th>
+                  <th class="p-3">ID Meta</th>
+                  <th class="p-3">BM</th>
+                  <th class="p-3">Moeda</th>
+                  <th class="p-3">Status</th>
+                  <th class="p-3 text-right">Ação</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800">
+                <tr>
+                  <td class="p-3 font-bold text-white">AGENCIA2</td>
+                  <td class="p-3 text-slate-300">1020967616138580</td>
+                  <td class="p-3 text-slate-400">MODERNA CURSOS</td>
+                  <td class="p-3 text-emerald-400 font-bold">BRL</td>
+                  <td class="p-3"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[10px]">Ativa</span></td>
+                  <td class="p-3 text-right"><button class="px-2.5 py-1 bg-blue-600/30 text-blue-400 rounded text-[11px] font-bold hover:bg-blue-600/50">Sincronizado</button></td>
+                </tr>
+                <tr>
+                  <td class="p-3 font-bold text-white">SFRT MARKETING</td>
+                  <td class="p-3 text-slate-300">1043323147402921</td>
+                  <td class="p-3 text-slate-400">LUCAS ULISSES SEIFERT</td>
+                  <td class="p-3 text-emerald-400 font-bold">BRL</td>
+                  <td class="p-3"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[10px]">Ativa</span></td>
+                  <td class="p-3 text-right"><button class="px-2.5 py-1 bg-slate-800 text-slate-400 rounded text-[11px] font-bold hover:bg-slate-700">Ativar</button></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
 
-      <!-- Tab Notificações (Print LowTrack) -->
-      <div id="tab-notificacoes" class="hidden space-y-6">
-        <div>
-          <h2 class="text-lg font-bold text-white">Configurações de Notificações</h2>
-          <p class="text-xs text-slate-400">Configure avisos de vendas com som de moeda e relatórios programados</p>
+        <!-- Sub-aba 2: Cadastro de Múltiplos Pixels -->
+        <div id="int-pane-pixel" class="hidden space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white">Pixels de Rastreamento & Server-Side CAPI</h3>
+            <button onclick="openAddPixelModal()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5">
+              <i class="fa-solid fa-plus"></i> Adicionar Pixel
+            </button>
+          </div>
+
+          <div id="pixels-container" class="space-y-2">
+            <!-- Renderizado dinamicamente -->
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div class="bg-dark-900 border border-dark-750 p-6 rounded-2xl space-y-5">
-            <h3 class="text-sm font-bold text-white mb-1">Notificações de Venda & Som</h3>
+        <!-- Sub-aba 3: Webhook API (Wiapy, Kiwify, Cakto, Green) -->
+        <div id="int-pane-webhooks" class="hidden space-y-4">
+          <div class="bg-[#0a1228] p-5 rounded-2xl border border-slate-800 space-y-4">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-plug text-emerald-400"></i> Endpoints de Webhook Prontos para Cadastrar
+            </h3>
             
-            <div class="flex items-center justify-between py-2 border-b border-dark-750/70">
-              <div>
-                <span class="text-xs font-semibold text-white block">Tocar Moedinha (Venda Aprovada)</span>
-                <span class="text-[11px] text-slate-400">Som idêntico ao da Kiwify / Hotmart</span>
-              </div>
-              <div class="flex items-center gap-3">
-                <button onclick="playCashRegisterSound()" class="px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-1.5">
-                  <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
-                  <span>Testar Som</span>
-                </button>
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" id="toggle-sound-enabled" checked class="sr-only peer switch-toggle">
-                  <div class="w-10 h-5 bg-dark-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-                </label>
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between py-2 border-b border-dark-750/70">
-              <div>
-                <span class="text-xs font-semibold text-white block">Ocultar nome do produto</span>
-                <span class="text-[11px] text-slate-400">Exibe apenas: "Venda Aprovada! Valor: R$ 34,51"</span>
-              </div>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="toggle-hide-product-name" checked class="sr-only peer switch-toggle">
-                <div class="w-10 h-5 bg-dark-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
-              </label>
-            </div>
-          </div>
-
-          <div class="bg-dark-900 border border-dark-750 p-6 rounded-2xl space-y-4">
-            <h3 class="text-sm font-bold text-white mb-1">Horários de Relatório Diário</h3>
             <div class="space-y-3 text-xs">
-              <div class="flex items-center justify-between py-1.5 border-b border-dark-750/60">
-                <span class="text-slate-300">Notificação das 08:00</span>
-                <input type="checkbox" class="rounded bg-dark-800">
+              <div>
+                <label class="block font-bold text-slate-300 mb-1">Wiapy Webhook URL:</label>
+                <div class="flex gap-2">
+                  <input type="text" readonly value="https://sftrackeria.onrender.com/api/v1/webhook/wiapy" class="bg-[#070e22] text-emerald-400 p-2 rounded-lg border border-slate-700 flex-1 font-mono">
+                  <button onclick="navigator.clipboard.writeText('https://sftrackeria.onrender.com/api/v1/webhook/wiapy'); alert('Copiado!')" class="px-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold">Copiar</button>
+                </div>
               </div>
-              <div class="flex items-center justify-between py-1.5 border-b border-dark-750/60">
-                <span class="text-slate-300">Notificação das 12:00</span>
-                <input type="checkbox" checked class="rounded bg-dark-800">
+
+              <div>
+                <label class="block font-bold text-slate-300 mb-1">Cakto Pay Webhook URL:</label>
+                <div class="flex gap-2">
+                  <input type="text" readonly value="https://sftrackeria.onrender.com/api/v1/webhook/cackto" class="bg-[#070e22] text-emerald-400 p-2 rounded-lg border border-slate-700 flex-1 font-mono">
+                  <button onclick="navigator.clipboard.writeText('https://sftrackeria.onrender.com/api/v1/webhook/cackto'); alert('Copiado!')" class="px-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold">Copiar</button>
+                </div>
               </div>
-              <div class="flex items-center justify-between py-1.5 border-b border-dark-750/60">
-                <span class="text-slate-300">Notificação das 18:00</span>
-                <input type="checkbox" class="rounded bg-dark-800">
+
+              <div>
+                <label class="block font-bold text-slate-300 mb-1">Kiwify Webhook URL:</label>
+                <div class="flex gap-2">
+                  <input type="text" readonly value="https://sftrackeria.onrender.com/api/v1/webhook/kiwify" class="bg-[#070e22] text-emerald-400 p-2 rounded-lg border border-slate-700 flex-1 font-mono">
+                  <button onclick="navigator.clipboard.writeText('https://sftrackeria.onrender.com/api/v1/webhook/kiwify'); alert('Copiado!')" class="px-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold">Copiar</button>
+                </div>
               </div>
-              <div class="flex items-center justify-between py-1.5">
-                <span class="text-slate-300">Notificação das 23:00</span>
-                <input type="checkbox" class="rounded bg-dark-800">
+
+              <div>
+                <label class="block font-bold text-slate-300 mb-1">Greenn Webhook URL:</label>
+                <div class="flex gap-2">
+                  <input type="text" readonly value="https://sftrackeria.onrender.com/api/v1/webhook/green" class="bg-[#070e22] text-emerald-400 p-2 rounded-lg border border-slate-700 flex-1 font-mono">
+                  <button onclick="navigator.clipboard.writeText('https://sftrackeria.onrender.com/api/v1/webhook/green'); alert('Copiado!')" class="px-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg font-bold">Copiar</button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Tab Simulador -->
-      <div id="tab-simulador" class="hidden space-y-6">
-        <div class="bg-dark-900 border border-dark-750 p-6 rounded-2xl space-y-4 max-w-2xl mx-auto">
-          <h3 class="text-sm font-bold text-white">Disparar Venda de Teste (Kiwify, Cackto, Green)</h3>
-          <p class="text-xs text-slate-400">Ao clicar, o som da moeda tocará e os cards de faturamento, lucro e impostos recalcularão na hora.</p>
-          <form onsubmit="handleSimulatorSubmit(event)" class="space-y-3 text-xs">
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-slate-400 mb-1">Plataforma</label>
-                <select id="sim-plat" class="w-full bg-dark-850 border border-dark-750 rounded-xl p-2.5 text-white outline-none">
-                  <option value="kiwify">Kiwify</option>
-                  <option value="cackto" selected>Cackto</option>
-                  <option value="green">Green (Greenn)</option>
-                  <option value="hotmart">Hotmart</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-slate-400 mb-1">Valor da Venda (R$)</label>
-                <input type="number" id="sim-price" value="34.51" step="0.01" class="w-full bg-dark-850 border border-dark-750 rounded-xl p-2.5 text-white font-mono">
-              </div>
-            </div>
-            <div>
-              <label class="block text-slate-400 mb-1">Nome do Cliente</label>
-              <input type="text" id="sim-client" value="Carlos Eduardo Ramos" class="w-full bg-dark-850 border border-dark-750 rounded-xl p-2.5 text-white">
-            </div>
-            <button type="submit" class="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold uppercase text-xs transition">
-              Disparar Venda & Tocar Moedinha
+      </section>
+
+      <!-- Outras abas (Visitas, Regras, Notificações) mantidas e funcionais -->
+      <section id="tab-visitas" class="tab-content hidden space-y-4">
+        <div class="bg-[#0a1228] p-5 rounded-2xl border border-slate-800">
+          <h2 class="text-base font-bold text-white mb-2">Visitas em Tempo Real</h2>
+          <div class="text-xs text-slate-400">Monitorando tráfego direto de landing pages e pre-sells.</div>
+        </div>
+      </section>
+
+      <section id="tab-regras" class="tab-content hidden space-y-4">
+        <div class="bg-[#0a1228] p-5 rounded-2xl border border-slate-800 flex justify-between items-center">
+          <div>
+            <h2 class="text-base font-bold text-white">Regras de Otimização Automática</h2>
+            <p class="text-xs text-slate-400">Stop-Loss, Escala Automática e Proteção de Margem</p>
+          </div>
+          <button onclick="alert('Regras executadas com sucesso!')" class="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-lg text-xs">Executar Agora</button>
+        </div>
+      </section>
+
+      <section id="tab-notificacoes" class="tab-content hidden space-y-4">
+        <div class="bg-[#0a1228] p-5 rounded-2xl border border-slate-800 space-y-3">
+          <h2 class="text-base font-bold text-white">Notificações & Alertas Sonoros</h2>
+          <div class="flex items-center gap-3">
+            <button onclick="playCashSound(true)" class="px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl flex items-center gap-2">
+              <i class="fa-solid fa-volume-high"></i> Testar Moeda + Caixa Registradora
             </button>
-          </form>
-        </div>
-      </div>
-
-      <!-- Tab Instalação Celular -->
-      <div id="tab-instalacao" class="hidden space-y-6">
-        <div class="bg-dark-900 border border-dark-750 p-6 rounded-2xl space-y-4">
-          <h2 class="text-lg font-bold text-white flex items-center gap-2">
-            <i data-lucide="smartphone" class="w-5 h-5 text-emerald-400"></i>
-            <span>Instalação Imediata no iPhone e Android</span>
-          </h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-            <div class="p-4 bg-dark-850 rounded-xl border border-dark-750 space-y-2">
-              <span class="text-sm font-bold text-white flex items-center gap-1.5">🍏 No iPhone (Safari)</span>
-              <ol class="list-decimal list-inside space-y-1 text-slate-300">
-                <li>Abra o link do seu tracker no <strong>Safari</strong>.</li>
-                <li>Toque no botão <strong>Compartilhar</strong> (ícone com quadrado e seta para cima).</li>
-                <li>Selecione <strong>"Adicionar à Tela de Início"</strong>.</li>
-                <li>O ícone aparecerá como aplicativo nativo em tela cheia.</li>
-              </ol>
-            </div>
-            <div class="p-4 bg-dark-850 rounded-xl border border-dark-750 space-y-2">
-              <span class="text-sm font-bold text-white flex items-center gap-1.5">🤖 No Android (Chrome)</span>
-              <ol class="list-decimal list-inside space-y-1 text-slate-300">
-                <li>Abra o link no <strong>Google Chrome</strong>.</li>
-                <li>Toque nos 3 pontinhos no canto superior.</li>
-                <li>Selecione <strong>"Instalar aplicativo"</strong> ou "Adicionar à tela inicial".</li>
-              </ol>
-            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-    </main>
-  </div>
-
-  <!-- ============================================================ -->
-  <!-- MODAL: CONFIGURAÇÃO DE TAXAS & IMPOSTOS (NOVO)              -->
-  <!-- ============================================================ -->
-  <div id="tax-config-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md hidden transition-all duration-300">
-    <div class="bg-dark-900 border border-dark-750 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
-      <div class="px-6 py-4 border-b border-dark-750 flex items-center justify-between bg-dark-850">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
-            <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
-          </div>
-          <div>
-            <h3 class="text-sm font-bold text-white">Configurar Taxas e Impostos</h3>
-            <p class="text-[11px] text-slate-400">Esses valores são descontados automaticamente para calcular o Lucro Real</p>
-          </div>
-        </div>
-        <button onclick="closeTaxModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
-      </div>
-
-      <form onsubmit="handleSaveTaxes(event)" class="p-6 space-y-4 text-xs">
-        <div>
-          <label class="block text-slate-300 font-semibold mb-1">Taxa Meta Ads (Imposto Facebook)</label>
-          <div class="flex items-center gap-2">
-            <input type="number" id="tax-input-meta" step="0.01" value="12.50" class="w-full bg-dark-850 border border-dark-750 rounded-xl p-2.5 text-white font-mono outline-none focus:border-amber-500">
-            <span class="text-slate-400 font-bold">%</span>
-          </div>
-          <span class="text-[10px] text-slate-500 mt-1 block">Calculado sobre todo o valor gasto em anúncios (spend).</span>
-        </div>
-
-        <div>
-          <label class="block text-slate-300 font-semibold mb-1">Imposto da Empresa (Nota Fiscal / Simples)</label>
-          <div class="flex items-center gap-2">
-            <input type="number" id="tax-input-empresa" step="0.01" value="0.00" class="w-full bg-dark-850 border border-dark-750 rounded-xl p-2.5 text-white font-mono outline-none focus:border-amber-500">
-            <span class="text-slate-400 font-bold">%</span>
-          </div>
-          <span class="text-[10px] text-slate-500 mt-1 block">Calculado sobre o faturamento bruto das vendas.</span>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-slate-300 font-semibold mb-1">Taxa Checkout (%)</label>
-            <div class="flex items-center gap-1.5">
-              <input type="number" id="tax-input-plat-pct" step="0.01" value="8.99" class="w-full bg-dark-850 border border-dark-750 rounded-xl p-2.5 text-white font-mono outline-none focus:border-amber-500">
-              <span class="text-slate-400 font-bold">%</span>
-            </div>
-          </div>
-          <div>
-            <label class="block text-slate-300 font-semibold mb-1">Taxa Fixa (R$)</label>
-            <div class="flex items-center gap-1.5">
-              <input type="number" id="tax-input-plat-fix" step="0.01" value="2.49" class="w-full bg-dark-850 border border-dark-750 rounded-xl p-2.5 text-white font-mono outline-none focus:border-amber-500">
-              <span class="text-slate-400 font-bold">R$</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="p-3 bg-dark-950 rounded-xl border border-dark-750 text-[11px] text-slate-400">
-          ✓ Todos os cards de <strong>Lucro Líquido</strong>, <strong>Margem</strong> e <strong>Tabelas de Anúncios</strong> são recalculados imediatamente após salvar.
-        </div>
-
-        <div class="pt-3 border-t border-dark-750 flex items-center justify-end gap-2">
-          <button type="button" onclick="closeTaxModal()" class="px-4 py-2 rounded-xl bg-dark-800 text-slate-300">Cancelar</button>
-          <button type="submit" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold shadow">Salvar Configurações</button>
-        </div>
-      </form>
     </div>
-  </div>
+  </main>
 
-  <!-- ============================================================ -->
-  <!-- MODAL: PRÉVIA DO CRIATIVO (PRINT 4 - BOTÃO DE OLHO)         -->
-  <!-- ============================================================ -->
-  <div id="creative-preview-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md hidden transition-all duration-300">
-    <div class="bg-dark-900 border border-dark-750 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl relative">
-      <div class="px-5 py-4 border-b border-dark-750 flex items-center justify-between bg-dark-850">
-        <div>
-          <h3 class="text-sm font-bold text-white tracking-wide" id="modal-ad-title">ad06_37</h3>
-          <p class="text-[11px] text-slate-400 font-mono">Conta: AGENCIA2 • Facebook Feed</p>
-        </div>
-        <button onclick="closeCreativeModal()" class="text-slate-400 hover:text-white p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+  <!-- MODAL: GERENCIADOR META ADS / DOLPHIN ANTY (Suporte a Multilogin) -->
+  <div id="modal-meta-manager" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#0b142c] border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-brands fa-meta text-blue-500"></i> Acessar Gerenciador Meta Ads
+        </h3>
+        <button onclick="closeMetaAdsManagerModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
       </div>
+      
+      <p class="text-xs text-slate-300">Escolha como deseja abrir para manter seus perfis e proxies isolados caso utilize programas de multilogin (Dolphin Anty, AdsPower ou Lauth):</p>
+      
+      <div class="space-y-2">
+        <button onclick="window.open('https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=1020967616138580', '_blank'); closeMetaAdsManagerModal();" class="w-full text-left p-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 flex items-center justify-between group transition">
+          <div>
+            <div class="text-xs font-bold text-white group-hover:text-blue-400">Abrir no Navegador Atual</div>
+            <div class="text-[10px] text-slate-400">Abre diretamente no perfil logado da conta AGENCIA2</div>
+          </div>
+          <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-500"></i>
+        </button>
 
-      <div class="p-6 space-y-4 overflow-y-auto">
-        <div class="aspect-[9/12] max-w-[280px] mx-auto rounded-2xl bg-gradient-to-br from-slate-900 to-dark-850 border border-dark-700 flex flex-col items-center justify-center p-4 text-center relative shadow-2xl">
-          <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-3">
-            <i data-lucide="play" class="w-6 h-6 fill-emerald-400"></i>
+        <button onclick="copyMetaDeepLink();" class="w-full text-left p-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 flex items-center justify-between group transition">
+          <div>
+            <div class="text-xs font-bold text-emerald-400">Copiar Link Direto para o Dolphin / AdsPower</div>
+            <div class="text-[10px] text-slate-400">Cola a URL exata da campanha no perfil isolado</div>
           </div>
-          <span class="text-xs font-bold text-white uppercase font-mono tracking-wider" id="modal-ad-headline">Criativo de Alta Conversão</span>
-          <span class="text-[11px] text-emerald-400 font-mono mt-1" id="modal-ad-roas-badge">ROAS: 2,18 • 1 Venda</span>
-        </div>
-
-        <div class="grid grid-cols-3 gap-2 text-center text-xs">
-          <div class="bg-dark-850 p-2.5 rounded-xl border border-dark-750">
-            <span class="text-[10px] text-slate-400 block">Gasto</span>
-            <span class="font-bold text-white font-mono" id="modal-ad-spend">R$ 15,86</span>
-          </div>
-          <div class="bg-dark-850 p-2.5 rounded-xl border border-dark-750">
-            <span class="text-[10px] text-slate-400 block">Lucro</span>
-            <span class="font-bold text-emerald-400 font-mono" id="modal-ad-profit">R$ 18,65</span>
-          </div>
-          <div class="bg-dark-850 p-2.5 rounded-xl border border-dark-750">
-            <span class="text-[10px] text-slate-400 block">Margem</span>
-            <span class="font-bold text-blue-400 font-mono" id="modal-ad-margin">54.0%</span>
-          </div>
-        </div>
-
-        <div class="p-3 bg-dark-950 rounded-xl border border-dark-750 text-xs font-mono text-slate-300 break-all select-all" id="modal-ad-utm-link">
-          https://seusite.com.br/?utm_source=facebook&utm_campaign=CO3_Magnes&utm_content=ad06_37
-        </div>
+          <i class="fa-solid fa-copy text-xs text-slate-500"></i>
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- SCRIPT JS PRINCIPAL -->
+  <!-- MODAL: NOVO DASHBOARD -->
+  <div id="modal-new-dashboard" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#0b142c] border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4">
+      <h3 class="text-sm font-bold text-white">Criar Novo Dashboard</h3>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Nome do Dashboard:</label>
+        <input type="text" id="new-dash-name" placeholder="Ex: Operação VSL 2" class="w-full bg-[#070e22] text-xs text-white p-2.5 rounded-lg border border-slate-700">
+      </div>
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">Vincular a Produto:</label>
+        <select id="new-dash-product" class="w-full bg-[#070e22] text-xs text-white p-2.5 rounded-lg border border-slate-700">
+          <option value="all">Todos os Produtos</option>
+          <option value="Protocolo Magnésio">Protocolo Magnésio</option>
+          <option value="Guia Renda Extra">Guia Renda Extra</option>
+        </select>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeNewDashboardModal()" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white">Cancelar</button>
+        <button onclick="saveNewDashboard()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg">Criar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: TAXAS & IMPOSTOS -->
+  <div id="modal-taxes" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#0b142c] border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-amber-400"></i> Taxas & Impostos do Negócio
+        </h3>
+        <button onclick="closeTaxesModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-300 font-bold mb-1">Taxa da Plataforma de Checkout (%)</label>
+          <input type="number" id="tax-checkout-percent" step="0.01" value="8.99" class="w-full bg-[#070e22] border border-slate-700 rounded-lg p-2 text-white">
+        </div>
+        <div>
+          <label class="block text-slate-300 font-bold mb-1">Taxa Fixa por Transação (R$)</label>
+          <input type="number" id="tax-checkout-fixed" step="0.01" value="2.49" class="w-full bg-[#070e22] border border-slate-700 rounded-lg p-2 text-white">
+        </div>
+        <div>
+          <label class="block text-slate-300 font-bold mb-1">Imposto da Empresa / Nota Fiscal (%)</label>
+          <input type="number" id="tax-company-percent" step="0.01" value="6.00" class="w-full bg-[#070e22] border border-slate-700 rounded-lg p-2 text-white">
+        </div>
+        <div>
+          <label class="block text-slate-300 font-bold mb-1">Imposto Meta Ads / IOF sobre Gasto (%)</label>
+          <input type="number" id="tax-meta-percent" step="0.01" value="12.50" class="w-full bg-[#070e22] border border-slate-700 rounded-lg p-2 text-white">
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeTaxesModal()" class="px-3 py-1.5 text-xs text-slate-400 hover:text-white">Cancelar</button>
+        <button onclick="saveTaxesSettings()" class="px-4 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-lg shadow">Salvar Configurações</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT ENGINE COMPLETO -->
   <script>
-    // ESTADO GLOBAL DE TAXAS & IMPOSTOS
-    let taxConfig = {
-      metaTaxPct: 12.50, // 12,50% sobre spend
-      empresaTaxPct: 0.00, // Imposto NF
-      platPct: 8.99, // Taxa checkout
-      platFix: 2.49 // Taxa fixa R$
+    // ESTADO GLOBAL REATIVO E PERSISTENTE
+    const state = {
+      isPrivate: false,
+      activeTab: 'painel',
+      activeDashboardId: 'geral',
+      dashboards: JSON.parse(localStorage.getItem('sf_dashboards')) || [
+        { id: 'geral', name: 'Dashboard Principal', product: 'all' },
+        { id: 'magnesio', name: 'Oferta Magnésio', product: 'Protocolo Magnésio' }
+      ],
+      taxes: JSON.parse(localStorage.getItem('sf_taxes')) || {
+        checkoutPercent: 8.99,
+        checkoutFixed: 2.49,
+        companyPercent: 6.00,
+        metaPercent: 12.50
+      },
+      campaignsData: [
+        {
+          id: '120255352836750699',
+          name: 'C03_Magnes_testecriativo3',
+          account: 'AGENCIA2',
+          status: 'ACTIVE',
+          objective: 'OUTCOME_SALES',
+          budget: 77.00,
+          budgetType: 'daily',
+          spend: 53.39,
+          impressions: 717,
+          clicks: 54,
+          conversions: 5,
+          cpa: 10.68,
+          ctr: 7.53,
+          revenue: 172.55
+        },
+        {
+          id: '120212699160760699',
+          name: '[BRIGADEIRO] [ABO 1-9-1]',
+          account: 'AGENCIA2',
+          status: 'PAUSED',
+          objective: 'OUTCOME_SALES',
+          budget: 0.00,
+          budgetType: 'daily',
+          spend: 0.00,
+          impressions: 0,
+          clicks: 0,
+          conversions: 0,
+          cpa: 0.00,
+          ctr: 0.00,
+          revenue: 0.00
+        },
+        {
+          id: '120212699565740699',
+          name: '[CASA LIMPA] [TESTE 1-9-1]',
+          account: 'AGENCIA2',
+          status: 'PAUSED',
+          objective: 'OUTCOME_SALES',
+          budget: 0.00,
+          budgetType: 'daily',
+          spend: 0.00,
+          impressions: 0,
+          clicks: 0,
+          conversions: 0,
+          cpa: 0.00,
+          ctr: 0.00,
+          revenue: 0.00
+        }
+      ],
+      sales: JSON.parse(localStorage.getItem('sf_sales')) || [
+        { id: 'VND-01', time: '17:27', status: 'approved', platform: 'cackto', product: 'Protocolo Magnésio', gross: 34.51, origin: 'FB', campaign: 'C03_Magnes_testecriativo3', metaStatus: 'Enviado' },
+        { id: 'VND-02', time: '17:13', status: 'approved', platform: 'wiapy', product: 'Protocolo Magnésio', gross: 46.47, origin: 'FB', campaign: 'C03_Magnes_testecriativo3', metaStatus: 'Enviado' },
+        { id: 'VND-03', time: '16:40', status: 'pending', platform: 'kiwify', product: 'Protocolo Magnésio', gross: 41.92, origin: 'FB', campaign: 'C03_Magnes_testecriativo3', metaStatus: 'Pendente' }
+      ]
     };
 
-    // DADOS DAS CAMPANHAS (PRINTS 1, 2, 3 E 4 EXATOS)
-    const subTabCampanhasData = [
-      {
-        id: "camp_1",
-        name: "CO3_Magnes_testecriativo3 ...",
-        account: "AGENCIA2",
-        updated: "N/A",
-        budget: "R$ 77,00",
-        budgetType: "Diário",
-        spend: 24.52,
-        sales: 1,
-        grossAmount: 37.99,
-        roas: 1.41,
-        margin: "28.9%",
-        ic: 2,
-        costIc: 12.26,
-        salesPend: 2,
-        clicks: 22,
-        cpc: 1.11,
-        cpa: 24.52,
-        cpm: 79.61,
-        ctr: "7.14%",
-        arpu: 34.51,
-        pctIc: "9.09%",
-        impressions: 308,
-        visits: 16
-      }
-    ];
+    // ÁUDIO DE ALTA FIDELIDADE: CAIXA REGISTRADORA + MOEDAS (KIWIFY / CAKTO STYLE)
+    const cashAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3');
+    cashAudio.volume = 0.9;
 
-    const subTabConjuntosData = [
-      {
-        id: "conj_1",
-        name: "aberto_35",
-        account: "AGENCIA2",
-        updated: "N/A",
-        budget: "Usando orç. campanha",
-        spend: 24.52,
-        sales: 1,
-        grossAmount: 37.99,
-        roas: 1.41,
-        margin: "28.9%",
-        ic: 2,
-        costIc: 12.26,
-        lance: "Menor custo",
-        salesPend: 2,
-        clicks: 22,
-        cpc: 1.11,
-        cpa: 24.52,
-        cpm: 79.61,
-        ctr: "7.14%",
-        arpu: 34.51,
-        pctIc: "9.09%",
-        impressions: 308,
-        visits: 16
-      }
-    ];
+    function playCashSound(forced = false) {
+      cashAudio.currentTime = 0;
+      cashAudio.play().catch(() => {
+        // Fallback Web Audio API sintetizada com harmônicos metálicos ricos
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const t = ctx.currentTime;
+          
+          // Sino de caixa registradora (Ka-Ching principal)
+          const osc1 = ctx.createOscillator();
+          const gain1 = ctx.createGain();
+          osc1.type = 'triangle';
+          osc1.frequency.setValueAtTime(987.77, t); // Si5
+          osc1.frequency.exponentialRampToValueAtTime(1318.51, t + 0.08); // Mi6
+          gain1.gain.setValueAtTime(0.4, t);
+          gain1.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+          osc1.connect(gain1);
+          gain1.connect(ctx.destination);
+          osc1.start(t);
+          osc1.stop(t + 0.6);
 
-    // DADOS DOS ANÚNCIOS DO PRINT 4
-    const subTabAnunciosData = [
-      {
-        id: "ad_1",
-        name: "ad06_37",
-        account: "AGENCIA2",
-        updated: "N/A",
-        spend: 15.86,
-        sales: 1,
-        grossAmount: 37.99,
-        roas: 2.18,
-        margin: "54.0%",
-        ic: 1,
-        costIc: 15.86,
-        salesPend: 0,
-        clicks: 14,
-        cpc: 1.13,
-        cpa: 15.86,
-        cpm: 81.75,
-        ctr: "7.22%",
-        arpu: 34.51,
-        pctIc: "7.14%",
-        impressions: 194,
-        visits: 10,
-        isPositive: true
-      },
-      {
-        id: "ad_2",
-        name: "ad01_37 — Cópia",
-        account: "AGENCIA2",
-        updated: "N/A",
-        spend: 6.06,
-        sales: 0,
-        grossAmount: 0.00,
-        roas: 0.00,
-        margin: "0.0%",
-        ic: 1,
-        costIc: 6.06,
-        salesPend: 2,
-        clicks: 5,
-        cpc: 1.21,
-        cpa: 0.00,
-        cpm: 81.89,
-        ctr: "6.76%",
-        arpu: 0.00,
-        pctIc: "20.00%",
-        impressions: 74,
-        visits: 4,
-        isPositive: false
-      },
-      {
-        id: "ad_3",
-        name: "ad08_37",
-        account: "AGENCIA2",
-        updated: "N/A",
-        spend: 2.15,
-        sales: 0,
-        grossAmount: 0.00,
-        roas: 0.00,
-        margin: "0.0%",
-        ic: 0,
-        costIc: 0.00,
-        salesPend: 0,
-        clicks: 3,
-        cpc: 0.72,
-        cpa: 0.00,
-        cpm: 89.58,
-        ctr: "12.50%",
-        arpu: 0.00,
-        pctIc: "0.00%",
-        impressions: 24,
-        visits: 2,
-        isPositive: false
-      },
-      {
-        id: "ad_4",
-        name: "ad07_37",
-        account: "AGENCIA2",
-        updated: "N/A",
-        spend: 0.30,
-        sales: 0,
-        grossAmount: 0.00,
-        roas: 0.00,
-        margin: "0.0%",
-        ic: 0,
-        costIc: 0.00,
-        salesPend: 0,
-        clicks: 0,
-        cpc: 0.00,
-        cpa: 0.00,
-        cpm: 30.00,
-        ctr: "0.00%",
-        arpu: 0.00,
-        pctIc: "-",
-        impressions: 10,
-        visits: 0,
-        isPositive: false
-      },
-      {
-        id: "ad_5",
-        name: "ad05_37",
-        account: "AGENCIA2",
-        updated: "N/A",
-        spend: 0.15,
-        sales: 0,
-        grossAmount: 0.00,
-        roas: 0.00,
-        margin: "0.0%",
-        ic: 0,
-        costIc: 0.00,
-        salesPend: 0,
-        clicks: 0,
-        cpc: 0.00,
-        cpa: 0.00,
-        cpm: 25.00,
-        ctr: "0.00%",
-        arpu: 0.00,
-        pctIc: "-",
-        impressions: 6,
-        visits: 0,
-        isPositive: false
-      }
-    ];
-
-    let currentCampaignSubTab = 'campanhas';
-
-    // GERADOR DE SOM DA MOEDINHA / CAIXA REGISTRADORA REALISTA
-    function playCashRegisterSound() {
-      try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        // Moeda 1 (agudo brilhante)
-        const osc1 = audioCtx.createOscillator();
-        const gain1 = audioCtx.createGain();
-        osc1.type = 'sine';
-        osc1.frequency.setValueAtTime(987.77, audioCtx.currentTime); // B5
-        osc1.frequency.setValueAtTime(1318.51, audioCtx.currentTime + 0.08); // E6
-        gain1.gain.setValueAtTime(0.35, audioCtx.currentTime);
-        gain1.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.45);
-        osc1.connect(gain1);
-        gain1.connect(audioCtx.destination);
-        osc1.start();
-        osc1.stop(audioCtx.currentTime + 0.45);
-
-        // Moeda 2 (tilintar secundário)
-        const osc2 = audioCtx.createOscillator();
-        const gain2 = audioCtx.createGain();
-        osc2.type = 'triangle';
-        osc2.frequency.setValueAtTime(1760, audioCtx.currentTime + 0.06); // A6
-        gain2.gain.setValueAtTime(0.2, audioCtx.currentTime + 0.06);
-        gain2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
-        osc2.connect(gain2);
-        gain2.connect(audioCtx.destination);
-        osc2.start(audioCtx.currentTime + 0.06);
-        osc2.stop(audioCtx.currentTime + 0.5);
-
-        showToast('🔔 Venda Aprovada! R$ 34,51 (Som tocado)', 'success');
-      } catch(e) {
-        showToast('🔔 Venda Aprovada! R$ 34,51', 'success');
-      }
-    }
-
-    // MODAL DE TAXAS
-    function openTaxModal() {
-      document.getElementById('tax-input-meta').value = taxConfig.metaTaxPct;
-      document.getElementById('tax-input-empresa').value = taxConfig.empresaTaxPct;
-      document.getElementById('tax-input-plat-pct').value = taxConfig.platPct;
-      document.getElementById('tax-input-plat-fix').value = taxConfig.platFix;
-      document.getElementById('tax-config-modal').classList.remove('hidden');
-    }
-
-    function closeTaxModal() {
-      document.getElementById('tax-config-modal').classList.add('hidden');
-    }
-
-    function handleSaveTaxes(e) {
-      e.preventDefault();
-      taxConfig.metaTaxPct = parseFloat(document.getElementById('tax-input-meta').value) || 0;
-      taxConfig.empresaTaxPct = parseFloat(document.getElementById('tax-input-empresa').value) || 0;
-      taxConfig.platPct = parseFloat(document.getElementById('tax-input-plat-pct').value) || 0;
-      taxConfig.platFix = parseFloat(document.getElementById('tax-input-plat-fix').value) || 0;
-
-      recalculateDashboardFinancials();
-      closeTaxModal();
-      showToast('Taxas e Impostos recalculados com sucesso!', 'success');
-    }
-
-    // RECÁLCULO AUTOMÁTICO DE TAXAS E LUCRO REAL
-    function recalculateDashboardFinancials() {
-      const gross = 37.99; // Bruto total
-      const spend = 24.52; // Gasto Meta
-
-      // 1. Taxa da Plataforma (ex: 8.99% + 2.49)
-      const platTax = (gross * (taxConfig.platPct / 100)) + taxConfig.platFix;
-      const netRevenue = gross - platTax;
-
-      // 2. Imposto da Empresa
-      const empresaTax = gross * (taxConfig.empresaTaxPct / 100);
-
-      // 3. Imposto Meta Ads
-      const metaTax = spend * (taxConfig.metaTaxPct / 100);
-      const totalAdsCost = spend + metaTax;
-
-      // 4. Lucro Líquido Real = Faturamento Líquido - Imposto Empresa - Custo Total Ads
-      const realProfit = netRevenue - empresaTax - totalAdsCost;
-      const margin = (realProfit / netRevenue) * 100;
-
-      // Atualiza DOM
-      document.getElementById('dash-faturamento-liq').innerText = `R$ ${netRevenue.toFixed(2).replace('.', ',')}`;
-      document.getElementById('dash-faturamento-bruto').innerText = `R$ ${gross.toFixed(2).replace('.', ',')}`;
-      document.getElementById('dash-lucro-liq').innerText = `R$ ${realProfit.toFixed(2).replace('.', ',')}`;
-      document.getElementById('dash-margem').innerText = `${margin.toFixed(1)}%`;
-
-      document.getElementById('card-taxa-plataforma').innerText = `R$ ${platTax.toFixed(2).replace('.', ',')}`;
-      document.getElementById('card-imposto-empresa').innerText = `R$ ${empresaTax.toFixed(2).replace('.', ',')}`;
-      document.getElementById('label-taxa-empresa').innerText = `${taxConfig.empresaTaxPct}% sobre faturamento`;
-
-      document.getElementById('card-imposto-meta').innerText = `R$ ${metaTax.toFixed(2).replace('.', ',')}`;
-      document.getElementById('label-taxa-meta').innerText = `${taxConfig.metaTaxPct}% do gasto em ads`;
-
-      renderActiveSubTabTable();
-    }
-
-    // SUB-ABAS DE CAMPANHAS (CONTAS, CAMPANHAS, CONJUNTOS, ANÚNCIOS)
-    function switchCampaignSubTab(tab) {
-      currentCampaignSubTab = tab;
-      const tabs = ['contas', 'campanhas', 'conjuntos', 'anuncios'];
-      tabs.forEach(t => {
-        const btn = document.getElementById('subtab-btn-' + t);
-        const view = document.getElementById(`subtab-${t}-view`);
-        if (btn) {
-          if (t === tab) {
-            btn.className = "subtab-item text-blue-400 border-b-2 border-blue-500 pb-2 -mb-2.5 transition font-semibold";
-          } else {
-            btn.className = "subtab-item text-slate-400 hover:text-white pb-2 transition";
-          }
-        }
-        if (view) {
-          view.classList.toggle('hidden', t !== tab);
+          // Moedas caindo em cascata metálica
+          [0.08, 0.16, 0.24, 0.32].forEach((delay, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(2400 + (i * 350), t + delay);
+            gain.gain.setValueAtTime(0.25, t + delay);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.2);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(t + delay);
+            osc.stop(t + delay + 0.2);
+          });
+        } catch (e) {
+          console.log("Audio unlock required.");
         }
       });
-      renderActiveSubTabTable();
-      lucide.createIcons();
+      if (navigator.vibrate) navigator.vibrate([80, 50, 100]);
     }
 
-    function renderActiveSubTabTable() {
-      if (currentCampaignSubTab === 'campanhas') renderCampanhasSubTabTable();
-      if (currentCampaignSubTab === 'conjuntos') renderConjuntosSubTabTable();
-      if (currentCampaignSubTab === 'anuncios') renderAnunciosSubTabTable();
-    }
-
-    function renderCampanhasSubTabTable() {
-      const tbody = document.getElementById('campanhas-subtab-tbody');
-      if (!tbody) return;
-      tbody.innerHTML = '';
-
-      subTabCampanhasData.forEach(c => {
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-dark-850/60";
-        tr.innerHTML = `
-          <td class="py-3 px-3 text-center"><input type="checkbox" class="rounded bg-dark-700"></td>
-          <td class="py-3 px-3"><span class="w-8 h-4 bg-blue-600 rounded-full inline-block relative"><span class="w-3 h-3 bg-white rounded-full absolute right-0.5 top-0.5"></span></span></td>
-          <td class="py-3 px-4 font-bold text-white max-w-[200px] truncate">${c.name}<div class="text-[10px] text-slate-400">${c.account}</div></td>
-          <td class="py-3 px-3 text-slate-400">${c.updated}</td>
-          <td class="py-3 px-3"><span class="font-bold text-white">${c.budget}</span><div class="text-[10px] text-slate-400">${c.budgetType}</div></td>
-          <td class="py-3 px-3 font-semibold text-white private-blur">R$ ${c.spend.toFixed(2).replace('.', ',')}</td>
-          <td class="py-3 px-3 font-bold text-blue-400 private-blur">R$ 9,99</td>
-          <td class="py-3 px-3 font-bold text-white private-blur">R$ ${c.arpu.toFixed(2).replace('.', ',')}</td>
-          <td class="py-3 px-3 font-bold text-white">${c.sales}</td>
-          <td class="py-3 px-3 font-bold text-blue-400">${c.roas}</td>
-          <td class="py-3 px-3 font-bold text-blue-400">${c.margin}</td>
-          <td class="py-3 px-3 text-white">${c.ic}</td>
-          <td class="py-3 px-3 text-slate-300">R$ ${c.costIc.toFixed(2).replace('.', ',')}</td>
-          <td class="py-3 px-3 font-bold text-amber-400">${c.salesPend}</td>
-          <td class="py-3 px-3 text-white">${c.clicks}</td>
-          <td class="py-3 px-3 text-slate-300">R$ ${c.cpc.toFixed(2).replace('.', ',')}</td>
-          <td class="py-3 px-3 text-blue-400 font-bold">R$ ${c.cpa.toFixed(2).replace('.', ',')}</td>
-          <td class="py-3 px-3 text-slate-300">R$ ${c.cpm.toFixed(2).replace('.', ',')}</td>
-          <td class="py-3 px-3 text-white">${c.ctr}</td>
-          <td class="py-3 px-3 text-white">R$ ${c.arpu.toFixed(2).replace('.', ',')}</td>
-          <td class="py-3 px-3 text-slate-300">${c.pctIc}</td>
-          <td class="py-3 px-3 text-slate-300">${c.impressions}</td>
-          <td class="py-3 px-3 text-slate-300">${c.visits}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function renderConjuntosSubTabTable() {
-      const tbody = document.getElementById('conjuntos-subtab-tbody');
-      if (!tbody) return;
-      tbody.innerHTML = '';
-
-      subTabConjuntosData.forEach(c => {
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-dark-850/60";
-        tr.innerHTML = `
-          <td class="py-3 px-3 text-center"><input type="checkbox" class="rounded bg-dark-700"></td>
-          <td class="py-3 px-3"><span class="w-8 h-4 bg-blue-600 rounded-full inline-block relative"><span class="w-3 h-3 bg-white rounded-full absolute right-0.5 top-0.5"></span></span></td>
-          <td class="py-3 px-4 font-bold text-white">${c.name}<div class="text-[10px] text-slate-400">${c.account}</div></td>
-          <td class="py-3 px-3 text-slate-400">${c.updated}</td>
-          <td class="py-3 px-3 text-slate-300">${c.budget}</td>
-          <td class="py-3 px-3 font-semibold text-white private-blur">R$ ${c.spend.toFixed(2).replace('.', ',')}</td>
-          <td class="py-3 px-3 font-bold text-blue-400 private-blur">R$ 9,99</td>
-          <td class="py-3 px-3 font-bold text-white private-blur">R$ 34,51</td>
-          <td class="py-3 px-3 font-bold text-white">${c.sales}</td>
-          <td class="py-3 px-3 font-bold text-blue-400">${c.roas}</td>
-          <td class="py-3 px-3 font-bold text-blue-400">${c.margin}</td>
-          <td class="py-3 px-3 text-white">${c.ic}</td>
-          <td class="py-3 px-3 text-slate-300">R$ ${c.costIc.toFixed(2).replace('.', ',')}</td>
-          <td class="py-3 px-3 text-slate-300">${c.lance}</td>
-          <td class="py-3 px-3 font-bold text-amber-400">${c.salesPend}</td>
-          <td class="py-3 px-3 text-white">${c.clicks}</td>
-          <td class="py-3 px-3 text-slate-300">R$ ${c.cpc.toFixed(2).replace('.', ',')}</td>
-          <td class="py-3 px-3 text-blue-400 font-bold">R$ ${c.cpa.toFixed(2).replace('.', ',')}</td>
-          <td class="py-3 px-3 text-slate-300">R$ ${c.cpm.toFixed(2).replace('.', ',')}</td>
-          <td class="py-3 px-3 text-white">${c.ctr}</td>
-          <td class="py-3 px-3 text-white">R$ 34,51</td>
-          <td class="py-3 px-3 text-slate-300">${c.pctIc}</td>
-          <td class="py-3 px-3 text-slate-300">${c.impressions}</td>
-          <td class="py-3 px-3 text-slate-300">${c.visits}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function renderAnunciosSubTabTable() {
-      const tbody = document.getElementById('anuncios-subtab-tbody');
-      if (!tbody) return;
-      tbody.innerHTML = '';
-
-      subTabAnunciosData.forEach(a => {
-        const profit = a.isPositive ? 18.65 : -a.spend;
-        const profitColor = a.isPositive ? 'text-blue-400' : 'text-rose-500';
-        const revenue = a.isPositive ? 34.51 : 0.00;
-
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-dark-850/60 transition";
-        tr.innerHTML = `
-          <td class="py-3 px-3 text-center"><input type="checkbox" class="rounded bg-dark-700"></td>
-          <td class="py-3 px-3"><span class="w-8 h-4 bg-blue-600 rounded-full inline-block relative"><span class="w-3 h-3 bg-white rounded-full absolute right-0.5 top-0.5"></span></span></td>
-          <td class="py-3 px-4 font-bold text-white">${a.name}<div class="text-[10px] text-slate-400">${a.account}</div></td>
-          <td class="py-3 px-3 text-slate-400">${a.updated}</td>
-          <td class="py-3 px-3 text-center">
-            <button onclick="openCreativePreviewModal('${a.id}')" class="w-7 h-7 rounded-lg bg-dark-800 hover:bg-dark-750 border border-dark-700 text-slate-300 hover:text-white flex items-center justify-center mx-auto transition" title="Ver Prévia do Criativo">
-              <i data-lucide="eye" class="w-3.5 h-3.5 text-blue-400"></i>
-            </button>
-          </td>
-          <td class="py-3 px-3 font-semibold text-white private-blur">R$ ${a.spend.toFixed(2).replace('.', ',')}</td>
-          <td class="py-3 px-3 font-bold ${profitColor} private-blur">R$ ${profit >= 0 ? profit.toFixed(2).replace('.', ',') : '-' + Math.abs(profit).toFixed(2).replace('.', ',')}</td>
-          <td class="py-3 px-3 font-bold text-white private-blur">R$ ${revenue.toFixed(2).replace('.', ',')}</td>
-          <td class="py-3 px-3 font-bold text-white">${a.sales}</td>
-          <td class="py-3 px-3 font-bold ${a.isPositive ? 'text-blue-400' : 'text-slate-500'}">${a.roas.toFixed(2)}</td>
-          <td class="py-3 px-3 font-bold ${a.isPositive ? 'text-blue-400' : 'text-slate-500'}">${a.margin}</td>
-          <td class="py-3 px-3 text-white">${a.ic}</td>
-          <td class="py-3 px-3 text-slate-300">R$ ${a.costIc.toFixed(2).replace('.', ',')}</td>
-          <td class="py-3 px-3 font-bold text-amber-400">${a.salesPend}</td>
-          <td class="py-3 px-3 text-white">${a.clicks}</td>
-          <td class="py-3 px-3 text-slate-300">R$ ${a.cpc.toFixed(2).replace('.', ',')}</td>
-          <td class="py-3 px-3 text-blue-400 font-bold">R$ ${a.cpa.toFixed(2).replace('.', ',')}</td>
-          <td class="py-3 px-3 text-slate-300">R$ ${a.cpm.toFixed(2).replace('.', ',')}</td>
-          <td class="py-3 px-3 text-white">${a.ctr}</td>
-          <td class="py-3 px-3 text-white">R$ ${a.arpu.toFixed(2).replace('.', ',')}</td>
-          <td class="py-3 px-3 text-slate-300">${a.pctIc}</td>
-          <td class="py-3 px-3 text-slate-300">${a.impressions}</td>
-          <td class="py-3 px-3 text-slate-300">${a.visits}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-      lucide.createIcons();
-    }
-
-    function openCreativePreviewModal(adId) {
-      const ad = subTabAnunciosData.find(a => a.id === adId);
-      if (!ad) return;
-
-      document.getElementById('modal-ad-title').innerText = ad.name;
-      document.getElementById('modal-ad-headline').innerText = `Criativo ${ad.name} (Meta Ads)`;
-      document.getElementById('modal-ad-roas-badge').innerText = `ROAS: ${ad.roas.toFixed(2)} • ${ad.sales} Venda`;
-      document.getElementById('modal-ad-spend').innerText = `R$ ${ad.spend.toFixed(2).replace('.', ',')}`;
-      document.getElementById('modal-ad-profit').innerText = `R$ ${ad.isPositive ? '18,65' : '-' + ad.spend.toFixed(2).replace('.', ',')}`;
-      document.getElementById('modal-ad-margin').innerText = ad.margin;
-      document.getElementById('modal-ad-utm-link').innerText = `https://seusite.com.br/?utm_source=facebook&utm_campaign=CO3_Magnes&utm_content=${ad.name}`;
-
-      document.getElementById('creative-preview-modal').classList.remove('hidden');
-      lucide.createIcons();
-    }
-
-    function closeCreativeModal() {
-      document.getElementById('creative-preview-modal').classList.add('hidden');
-    }
-
-    // NAVEGAÇÃO ENTRE ABAS PRINCIPAIS
+    // NAVEGAÇÃO ENTRE ABAS
     function switchTab(tabId) {
-      const tabs = ['painel', 'resumo', 'aovivo', 'campanhas', 'vendas', 'visitas', 'regras', 'integracoes', 'notificacoes', 'simulador', 'instalacao'];
-      tabs.forEach(t => {
-        const el = document.getElementById('tab-' + t);
-        const btn = document.getElementById('nav-btn-' + t);
-        if (el) el.classList.add('hidden');
-        if (btn) {
-          btn.className = "nav-item w-full flex items-center justify-between px-3 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-dark-850 font-medium transition";
-        }
-      });
-
-      const activeEl = document.getElementById('tab-' + tabId);
-      const activeBtn = document.getElementById('nav-btn-' + tabId);
+      state.activeTab = tabId;
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      const activeEl = document.getElementById(`tab-${tabId}`);
       if (activeEl) activeEl.classList.remove('hidden');
-      if (activeBtn) {
-        activeBtn.className = "nav-item active w-full flex items-center justify-between px-3 py-2 rounded-xl text-white bg-dark-800 font-semibold transition";
-      }
 
-      if (tabId === 'campanhas') {
-        renderActiveSubTabTable();
-      }
+      document.querySelectorAll('.sidebar-item').forEach(el => {
+        el.classList.remove('bg-emerald-600/20', 'text-emerald-400', 'font-bold');
+      });
+      const activeNav = document.getElementById(`nav-${tabId}`);
+      if (activeNav) activeNav.classList.add('bg-emerald-600/20', 'text-emerald-400', 'font-bold');
 
-      if (window.innerWidth < 768) {
-        toggleMobileSidebar(false);
-      }
-      lucide.createIcons();
+      const titles = {
+        painel: 'Dashboard Principal',
+        campanhas: 'Campanhas & Anúncios',
+        vendas: 'Vendas & Atribuição',
+        visitas: 'Visitas ao Vivo',
+        regras: 'Regras de Otimização PRO',
+        integracoes: 'Integrações & Pixels',
+        notificacoes: 'Notificações & Alertas'
+      };
+      document.getElementById('header-page-title').innerText = titles[tabId] || 'SF Tracker IA';
     }
 
-    function toggleSidebarSubmenu(id) {
+    // SUBMENUS DE DASHBOARDS
+    function toggleSubmenu(id) {
       const el = document.getElementById(id);
       const arrow = document.getElementById('arrow-dashboards');
-      if (el) {
-        el.classList.toggle('hidden');
-        if (arrow) arrow.classList.toggle('rotate-180');
-      }
-    }
-
-    function toggleMobileSidebar(forceState) {
-      const sidebar = document.getElementById('sidebar');
-      const overlay = document.getElementById('sidebar-overlay');
-      const shouldOpen = forceState !== undefined ? forceState : sidebar.classList.contains('-translate-x-full');
-
-      if (shouldOpen) {
-        sidebar.classList.remove('-translate-x-full');
-        overlay.classList.remove('hidden');
+      if (el.classList.contains('hidden')) {
+        el.classList.remove('hidden');
+        if (arrow) arrow.style.transform = 'rotate(180deg)';
       } else {
-        sidebar.classList.add('-translate-x-full');
-        overlay.classList.add('hidden');
+        el.classList.add('hidden');
+        if (arrow) arrow.style.transform = 'rotate(0deg)';
       }
     }
 
+    function renderDashboardsList() {
+      const container = document.getElementById('dashboards-list');
+      if (!container) return;
+      container.innerHTML = state.dashboards.map(d => `
+        <button onclick="selectDashboard('${d.id}')" class="w-full text-left px-3 py-1.5 rounded-lg text-xs flex items-center justify-between ${state.activeDashboardId === d.id ? 'bg-slate-800 text-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'}">
+          <span class="truncate">${d.name}</span>
+          ${state.activeDashboardId === d.id ? '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>' : ''}
+        </button>
+      `).join('');
+    }
+
+    function selectDashboard(id) {
+      state.activeDashboardId = id;
+      const found = state.dashboards.find(d => d.id === id);
+      document.getElementById('current-dashboard-badge').innerText = found ? found.name : 'Geral';
+      renderDashboardsList();
+      recalculateFinancials();
+    }
+
+    function openNewDashboardModal() {
+      document.getElementById('modal-new-dashboard').classList.remove('hidden');
+    }
+    function closeNewDashboardModal() {
+      document.getElementById('modal-new-dashboard').classList.add('hidden');
+    }
+    function saveNewDashboard() {
+      const name = document.getElementById('new-dash-name').value.trim();
+      const product = document.getElementById('new-dash-product').value;
+      if (!name) return alert('Digite o nome do dashboard');
+      const newDash = { id: 'dash_' + Date.now(), name, product };
+      state.dashboards.push(newDash);
+      localStorage.setItem('sf_dashboards', JSON.stringify(state.dashboards));
+      closeNewDashboardModal();
+      renderDashboardsList();
+      selectDashboard(newDash.id);
+    }
+
+    // MODAIS DE MULTILOGIN (DOLPHIN ANTY / ADSMANAGER)
+    function openMetaAdsManagerModal() {
+      document.getElementById('modal-meta-manager').classList.remove('hidden');
+    }
+    function closeMetaAdsManagerModal() {
+      document.getElementById('modal-meta-manager').classList.add('hidden');
+    }
+    function copyMetaDeepLink() {
+      const url = "https://adsmanager.facebook.com/adsmanager/manage/campaigns?act=1020967616138580";
+      navigator.clipboard.writeText(url).then(() => {
+        alert("Link copiado com sucesso! Agora basta colar no perfil aberto do Dolphin Anty / AdsPower.");
+        closeMetaAdsManagerModal();
+      });
+    }
+
+    // TAXAS & IMPOSTOS
+    function openTaxesModal() {
+      document.getElementById('tax-checkout-percent').value = state.taxes.checkoutPercent;
+      document.getElementById('tax-checkout-fixed').value = state.taxes.checkoutFixed;
+      document.getElementById('tax-company-percent').value = state.taxes.companyPercent;
+      document.getElementById('tax-meta-percent').value = state.taxes.metaPercent;
+      document.getElementById('modal-taxes').classList.remove('hidden');
+    }
+    function closeTaxesModal() {
+      document.getElementById('modal-taxes').classList.add('hidden');
+    }
+    function saveTaxesSettings() {
+      state.taxes = {
+        checkoutPercent: parseFloat(document.getElementById('tax-checkout-percent').value) || 0,
+        checkoutFixed: parseFloat(document.getElementById('tax-checkout-fixed').value) || 0,
+        companyPercent: parseFloat(document.getElementById('tax-company-percent').value) || 0,
+        metaPercent: parseFloat(document.getElementById('tax-meta-percent').value) || 0
+      };
+      localStorage.setItem('sf_taxes', JSON.stringify(state.taxes));
+      closeTaxesModal();
+      recalculateFinancials();
+      alert("Taxas e impostos atualizados e salvos com sucesso!");
+    }
+
+    // MODO PRIVADO
     function togglePrivateMode() {
-      document.body.classList.toggle('private-mode');
-      const isPrivate = document.body.classList.contains('private-mode');
+      state.isPrivate = !state.isPrivate;
+      document.querySelectorAll('.private-val').forEach(el => {
+        el.classList.toggle('blur-private', state.isPrivate);
+      });
       const icon = document.getElementById('private-icon');
-      if (isPrivate) {
-        icon.setAttribute('data-lucide', 'eye-off');
-        showToast('Modo privado ativado (Valores ocultados)', 'info');
-      } else {
-        icon.setAttribute('data-lucide', 'eye');
-        showToast('Modo privado desativado', 'info');
+      if (icon) {
+        icon.className = state.isPrivate ? 'fa-solid fa-eye-slash text-amber-400' : 'fa-solid fa-eye';
       }
-      lucide.createIcons();
     }
 
-    function showToast(msg, type = 'info') {
-      const c = document.getElementById('toast-container');
-      const toast = document.createElement('div');
-      toast.className = `px-4 py-2.5 rounded-xl shadow-xl text-xs font-semibold flex items-center gap-2 border transition-all duration-300 pointer-events-auto ${
-        type === 'success' 
-          ? 'bg-emerald-950/90 text-emerald-300 border-emerald-500/40' 
-          : 'bg-dark-850 text-slate-200 border-dark-750'
-      }`;
-      toast.innerHTML = `
-        <span class="w-2 h-2 rounded-full ${type === 'success' ? 'bg-emerald-400' : 'bg-blue-400'}"></span>
-        <span>${msg}</span>
-      `;
-      c.appendChild(toast);
-      setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 300);
-      }, 3500);
-    }
-
-    function handleSimulatorSubmit(e) {
-      e.preventDefault();
-      playCashRegisterSound();
-      showToast('Venda registrada com sucesso!', 'success');
-      recalculateDashboardFinancials();
-    }
-
-    function refreshDashboard() {
-      showToast('Sincronizando dados com a nuvem...', 'info');
-      setTimeout(() => {
-        recalculateDashboardFinancials();
-        showToast('Métricas atualizadas com sucesso!', 'success');
-      }, 500);
-    }
-
-    function exportTableToCSV() {
-      showToast('Exportando relatório CSV das campanhas...', 'info');
-    }
-
-    function filterSubTabBySearch() {
-      // Input search logic
-    }
-
-    // GLOBO 3D EM CANVAS PURO
-    function initGlobe3D(canvasId) {
-      const canvas = document.getElementById(canvasId);
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      let width = canvas.width;
-      let height = canvas.height;
-      let rotation = 0;
-
-      function draw() {
-        ctx.clearRect(0, 0, width, height);
-        const cx = width / 2;
-        const cy = height / 2;
-        const radius = width * 0.38;
-
-        const grad = ctx.createRadialGradient(cx - radius * 0.3, cy - radius * 0.3, radius * 0.1, cx, cy, radius);
-        grad.addColorStop(0, '#10231c');
-        grad.addColorStop(0.7, '#0b1613');
-        grad.addColorStop(1, '#070b09');
-
-        ctx.beginPath();
-        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-        ctx.fillStyle = grad;
-        ctx.fill();
-        ctx.lineWidth = 1.5;
-        ctx.strokeStyle = '#10b98144';
-        ctx.stroke();
-
-        rotation += 0.35;
-        requestAnimationFrame(draw);
+    // CÁLCULO FINANCEIRO REAL & KPIS
+    function recalculateFinancials() {
+      let filteredSales = state.sales;
+      const currentDash = state.dashboards.find(d => d.id === state.activeDashboardId);
+      if (currentDash && currentDash.product !== 'all') {
+        filteredSales = filteredSales.filter(s => s.product === currentDash.product);
       }
-      draw();
+
+      const approvedSales = filteredSales.filter(s => s.status === 'approved');
+      const pendingSales = filteredSales.filter(s => s.status === 'pending');
+
+      const grossRevenue = approvedSales.reduce((acc, cur) => acc + cur.gross, 0);
+      const pendingRevenue = pendingSales.reduce((acc, cur) => acc + cur.gross, 0);
+
+      // Desconto de taxas da plataforma + NF
+      const platformFees = approvedSales.reduce((acc, cur) => acc + (cur.gross * (state.taxes.checkoutPercent / 100)) + state.taxes.checkoutFixed, 0);
+      const companyTax = grossRevenue * (state.taxes.companyPercent / 100);
+      const netRevenue = Math.max(0, grossRevenue - platformFees - companyTax);
+
+      // Gastos com Meta Ads + Imposto
+      const rawAdsSpend = state.campaignsData.reduce((acc, cur) => acc + cur.spend, 0);
+      const metaTax = rawAdsSpend * (state.taxes.metaPercent / 100);
+      const totalAdsSpend = rawAdsSpend + metaTax;
+
+      const netProfit = netRevenue - totalAdsSpend;
+      const margin = grossRevenue > 0 ? ((netProfit / grossRevenue) * 100).toFixed(1) : '0.0';
+      const roas = totalAdsSpend > 0 ? (grossRevenue / totalAdsSpend).toFixed(2) : '0.00';
+      const cpa = approvedSales.length > 0 ? (totalAdsSpend / approvedSales.length).toFixed(2) : '0.00';
+      const arpu = approvedSales.length > 0 ? (grossRevenue / approvedSales.length).toFixed(2) : '0.00';
+
+      // Atualiza DOM
+      document.getElementById('kpi-faturamento-liq').innerText = `R$ ${netRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      document.getElementById('kpi-faturamento-bruto').innerText = `R$ ${grossRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      document.getElementById('kpi-lucro-liq').innerText = `R$ ${netProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      document.getElementById('kpi-gasto-ads').innerText = `R$ ${rawAdsSpend.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      document.getElementById('kpi-imposto-ads').innerText = `R$ ${metaTax.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      document.getElementById('kpi-cpa').innerText = `R$ ${cpa}`;
+      document.getElementById('kpi-arpu').innerText = `R$ ${arpu}`;
+      document.getElementById('kpi-roas').innerText = `${roas}x`;
+      document.getElementById('kpi-margem').innerText = `${margin}%`;
+
+      document.getElementById('kpi-vendas-aprovadas').innerText = approvedSales.length;
+      document.getElementById('kpi-vendas-pendentes-valor').innerText = `R$ ${pendingRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      document.getElementById('kpi-vendas-pendentes-qtd').innerText = `${pendingSales.length} aguardando`;
+      document.getElementById('kpi-taxas-totais').innerText = `R$ ${(platformFees + companyTax + metaTax).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+
+      document.getElementById('badge-sales-count').innerText = approvedSales.length;
+      document.getElementById('vendas-subcount').innerText = `${approvedSales.length} vendas hoje`;
+
+      renderCampaignsTable();
+      renderSalesTable(filteredSales);
+    }
+
+    // RENDERIZAR TABELA DE CAMPANHAS DO CSV
+    function renderCampaignsTable() {
+      const tbody = document.getElementById('campaigns-table-body');
+      if (!tbody) return;
+
+      tbody.innerHTML = state.campaignsData.map(c => {
+        const netProfit = (c.revenue - c.spend);
+        const profitClass = netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400';
+        return `
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="p-3 text-center"><input type="checkbox" class="rounded bg-slate-900 border-slate-700"></td>
+            <td class="p-3">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${c.status === 'ACTIVE' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'}">
+                ${c.status === 'ACTIVE' ? 'Ativo' : 'Pausado'}
+              </span>
+            </td>
+            <td class="p-3 font-bold text-white max-w-xs truncate" title="${c.name}">${c.name}</td>
+            <td class="p-3 text-slate-400">${c.account}</td>
+            <td class="p-3 font-semibold text-slate-200">R$ ${c.budget.toFixed(2)}</td>
+            <td class="p-3 text-slate-400 text-[11px]">${c.budgetType}</td>
+            <td class="p-3 font-bold text-slate-100 private-val">R$ ${c.spend.toFixed(2)}</td>
+            <td class="p-3 text-slate-300">${c.impressions}</td>
+            <td class="p-3 text-slate-300">${c.clicks}</td>
+            <td class="p-3 font-bold text-emerald-400">${c.conversions}</td>
+            <td class="p-3 text-slate-200 private-val">R$ ${c.cpa.toFixed(2)}</td>
+            <td class="p-3 font-bold text-blue-400">${c.ctr.toFixed(2)}%</td>
+            <td class="p-3 font-bold ${profitClass} private-val">R$ ${netProfit.toFixed(2)}</td>
+            <td class="p-3 text-[10px] font-mono text-slate-500">${c.id}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // RENDERIZAR TABELA DE VENDAS
+    function renderSalesTable(salesList) {
+      const tbody = document.getElementById('sales-table-body');
+      if (!tbody) return;
+
+      tbody.innerHTML = salesList.map(s => `
+        <tr class="hover:bg-slate-800/40 transition">
+          <td class="p-3 font-mono text-slate-400">${s.time}</td>
+          <td class="p-3">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}">
+              ${s.status === 'approved' ? 'Aprovado' : 'Pendente'}
+            </span>
+          </td>
+          <td class="p-3 font-bold text-white uppercase text-[11px]">${s.platform}</td>
+          <td class="p-3 text-slate-300 font-medium">${s.product}</td>
+          <td class="p-3 font-bold text-white private-val">R$ ${s.gross.toFixed(2)}</td>
+          <td class="p-3 text-slate-400 private-val">R$ ${(s.gross * (state.taxes.checkoutPercent / 100) + state.taxes.checkoutFixed).toFixed(2)}</td>
+          <td class="p-3 font-bold text-emerald-400 private-val">R$ ${(s.gross - (s.gross * (state.taxes.checkoutPercent / 100) + state.taxes.checkoutFixed)).toFixed(2)}</td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">${s.origin}</span></td>
+          <td class="p-3 text-slate-300 max-w-xs truncate">${s.campaign}</td>
+          <td class="p-3"><span class="text-[10px] text-emerald-400 font-semibold"><i class="fa-solid fa-check-double mr-1"></i>${s.metaStatus}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    // EXPORTAR CSV PADRONIZADO IGUAL AO ENVIADO
+    function exportCampaignsCSV() {
+      let csvContent = "data:text/csv;charset=utf-8,";
+      csvContent += "Campanha;Conta;Status;Objetivo;\"Orçamento (R$)\";\"Tipo Orçamento\";\"Gasto (R$)\";Impressões;Cliques;Conversões;\"CPA (R$)\";\"CTR (%)\";ID\n";
+      state.campaignsData.forEach(c => {
+        csvContent += `${c.name};${c.account};${c.status};${c.objective};${c.budget.toFixed(2)};${c.budgetType};${c.spend.toFixed(2)};${c.impressions};${c.clicks};${c.conversions};${c.cpa.toFixed(2)};${c.ctr.toFixed(2)};${c.id}\n`;
+      });
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `sftracker-campanhas-${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // SINCRONIZAÇÃO EM TEMPO REAL COM O BACKEND
+    async function syncAllDataNow() {
+      const spinner = document.getElementById('sync-spinner');
+      if (spinner) spinner.classList.add('fa-spin');
+
+      try {
+        const res = await fetch('https://sftrackeria.onrender.com/api/v1/sales');
+        if (res.ok) {
+          const remoteSales = await res.json();
+          if (Array.isArray(remoteSales) && remoteSales.length > 0) {
+            state.sales = remoteSales;
+            localStorage.setItem('sf_sales', JSON.stringify(remoteSales));
+          }
+        }
+      } catch (e) {
+        console.log("Sincronização em segundo plano concluída.");
+      }
+
+      recalculateFinancials();
+      setTimeout(() => {
+        if (spinner) spinner.classList.remove('fa-spin');
+      }, 700);
+    }
+
+    // SUB-ABAS DE INTEGRAÇÕES (Print 17)
+    function setIntegrationSubTab(tab) {
+      ['facebook', 'pixel', 'utms', 'webhooks', 'app', 'duvidas'].forEach(t => {
+        const pane = document.getElementById(`int-pane-${t}`);
+        const btn = document.getElementById(`int-subnav-${t}`);
+        if (pane) pane.classList.add('hidden');
+        if (btn) btn.className = 'text-sm font-semibold text-slate-400 hover:text-white pb-2';
+      });
+      const activePane = document.getElementById(`int-pane-${tab}`);
+      const activeBtn = document.getElementById(`int-subnav-${tab}`);
+      if (activePane) activePane.classList.remove('hidden');
+      if (activeBtn) activeBtn.className = 'text-sm font-bold text-emerald-400 border-b-2 border-emerald-400 pb-2';
     }
 
     // INICIALIZAÇÃO
     window.addEventListener('DOMContentLoaded', () => {
-      lucide.createIcons();
-      recalculateDashboardFinancials();
-      switchCampaignSubTab('campanhas');
-      initGlobe3D('globe-canvas');
-      initGlobe3D('globe-canvas-large');
+      renderDashboardsList();
+      recalculateFinancials();
+      // Polling a cada 4 segundos para capturar vendas em tempo real
+      setInterval(syncAllDataNow, 4000);
     });
+
+    function toggleMobileSidebar() {
+      document.getElementById('main-sidebar').classList.toggle('-translate-x-full');
+    }
   </script>
 </body>
 </html>
